@@ -1,6 +1,66 @@
-# Getting Started with Create React App
+# ResuMagic - AI-Powered Resume Builder
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, responsive web application that helps students and professionals build ATS-friendly resumes with intelligent suggestions and guided roadmaps.
+
+## 🚀 Features
+
+### ✅ Core Functionality
+- **Multi-step Resume Builder**: Intuitive form-based approach for building resumes
+- **Personal Information**: Contact details and professional summary
+- **Education Management**: Multiple education entries with coursework tracking
+- **Skills Organization**: Categorized skill management with quick-add suggestions
+- **Project Showcase**: Detailed project descriptions with technology stacks
+- **Certifications**: Industry-standard certification tracking and suggestions
+- **Real-time Preview**: Live resume preview with professional formatting
+- **PDF Export**: High-quality PDF generation for job applications
+
+### 🎨 Design & UX
+- **Modern UI**: Clean, professional design with blue/violet color scheme
+- **Responsive Design**: Fully functional on desktop, tablet, and mobile devices
+- **Smooth Transitions**: Polished animations and state transitions
+- **Toast Notifications**: User feedback for all actions
+- **Progress Tracking**: Visual progress indicator throughout the process
+
+### 💼 Premium Features
+- **Free vs Premium**: Clear distinction between free and premium features
+- **Payment Integration**: Mock payment flow for premium subscriptions
+- **Advanced Suggestions**: AI-powered content recommendations
+
+## 🛠️ Technology Stack
+
+- **Frontend**: React 18 with TypeScript
+- **Styling**: Tailwind CSS with custom design system
+- **Routing**: React Router DOM
+- **State Management**: React Context API with useReducer
+- **PDF Generation**: jsPDF + html2canvas
+- **Build Tool**: Create React App
+- **Package Manager**: npm
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (version 14 or higher)
+- npm package manager
+
+### Installation
+
+1. **Navigate to the project directory**
+   ```bash
+   cd resumagic
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server**
+   ```bash
+   npm start
+   ```
+
+4. **Open your browser**
+   Navigate to `http://localhost:3000` to view the application
 
 ## Available Scripts
 
