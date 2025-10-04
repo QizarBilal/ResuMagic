@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
+import { PaymentItem } from '../../types';
+import { Button } from '../ui';
+import Modal from '../common/Modal';
+import PaymentForm from '../payment/PaymentForm';
 
 export interface Template {
   id: string;
@@ -9,9 +13,12 @@ export interface Template {
   isPremium: boolean;
   description: string;
   features: string[];
+  price?: number;
+  originalPrice?: number;
 }
 
 const templates: Template[] = [
+  // Free Templates
   {
     id: 'modern-1',
     name: 'Modern Professional',
@@ -31,22 +38,47 @@ const templates: Template[] = [
     features: ['Professional Layout', 'Clean Typography', 'Standard Format']
   },
   {
+    id: 'minimal-basic',
+    name: 'Minimal Basic',
+    thumbnail: '/templates/minimal-basic.jpg',
+    category: 'minimal',
+    isPremium: false,
+    description: 'Simple and clean design for all industries',
+    features: ['Clean Layout', 'Easy to Read', 'ATS-Compatible']
+  },
+  // Premium Templates
+  {
     id: 'creative-1',
     name: 'Creative Designer',
     thumbnail: '/templates/creative-1.jpg',
     category: 'creative',
     isPremium: true,
+    price: 14.99,
+    originalPrice: 21.99,
     description: 'Bold design for creative professionals and designers',
     features: ['Visual Elements', 'Color Accents', 'Portfolio Section']
   },
   {
-    id: 'minimal-1',
-    name: 'Minimal Clean',
-    thumbnail: '/templates/minimal-1.jpg',
-    category: 'minimal',
+    id: 'executive-pro',
+    name: 'Executive Pro',
+    thumbnail: '/templates/executive-pro.jpg',
+    category: 'modern',
     isPremium: true,
-    description: 'Ultra-clean design focusing on content',
-    features: ['Minimalist Design', 'White Space', 'Typography Focus']
+    price: 12.99,
+    originalPrice: 19.99,
+    description: 'Premium executive template for senior-level positions',
+    features: ['Executive Layout', 'Leadership Focus', 'Achievement Highlights']
+  },
+  {
+    id: 'tech-innovator',
+    name: 'Tech Innovator',
+    thumbnail: '/templates/tech-innovator.jpg',
+    category: 'modern',
+    isPremium: true,
+    price: 9.99,
+    originalPrice: 14.99,
+    description: 'Modern tech-focused design for developers and engineers',
+    features: ['Tech-Optimized', 'Project Showcase', 'Skills Matrix']
   },
   {
     id: 'modern-2',
@@ -75,27 +107,57 @@ interface TemplateSelectorProps {
 
 const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect, selectedTemplate }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedPaymentItem, setSelectedPaymentItem] = useState<PaymentItem | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { premium } = useResume();
 
   const categories = [
     { id: 'all', name: 'All Templates' },
+    { id: 'free', name: 'Free Templates' },
+    { id: 'premium', name: 'Premium Templates' },
     { id: 'modern', name: 'Modern' },
     { id: 'classic', name: 'Classic' },
     { id: 'creative', name: 'Creative' },
     { id: 'minimal', name: 'Minimal' }
   ];
 
-  const filteredTemplates = templates.filter(template => 
-    selectedCategory === 'all' || template.category === selectedCategory
-  );
+  const filteredTemplates = templates.filter(template => {
+    if (selectedCategory === 'all') return true;
+    if (selectedCategory === 'free') return !template.isPremium;
+    if (selectedCategory === 'premium') return template.isPremium;
+    return template.category === selectedCategory;
+  });
 
   const handleTemplateSelect = (template: Template) => {
     if (template.isPremium && !premium) {
-      // Show upgrade modal or message
-      alert('This template requires a Premium subscription. Please upgrade to access premium templates.');
+      // Show payment modal for premium template
+      setSelectedPaymentItem({
+        id: template.id,
+        type: 'template',
+        name: template.name,
+        price: template.price || 0,
+        description: template.description
+      });
+      setShowPaymentModal(true);
       return;
     }
     onSelect(template);
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowPaymentModal(false);
+    if (selectedPaymentItem) {
+      const template = templates.find(t => t.id === selectedPaymentItem.id);
+      if (template) {
+        onSelect(template);
+      }
+    }
+    setSelectedPaymentItem(null);
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentModal(false);
+    setSelectedPaymentItem(null);
   };
 
   return (
@@ -171,6 +233,16 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect, selectedT
               
               <p className="text-sm text-gray-600 mb-3">{template.description}</p>
               
+              {/* Premium Pricing */}
+              {template.isPremium && template.price && (
+                <div className="flex items-center justify-center space-x-2 mb-3 p-2 bg-primary-50 rounded-lg">
+                  <span className="text-lg font-bold text-primary-600">${template.price}</span>
+                  {template.originalPrice && (
+                    <span className="text-sm text-gray-500 line-through">${template.originalPrice}</span>
+                  )}
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <div className="text-xs font-medium text-gray-700">Features:</div>
                 <div className="flex flex-wrap gap-1">
@@ -185,25 +257,21 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect, selectedT
                 </div>
               </div>
 
-              {/* Selection Indicator */}
-              {selectedTemplate?.id === template.id && (
+              {/* Selection Indicator or Premium Action */}
+              {selectedTemplate?.id === template.id ? (
                 <div className="mt-3 flex items-center text-primary-600">
                   <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                   <span className="text-sm font-medium">Selected</span>
                 </div>
-              )}
-
-              {/* Premium Lock Overlay */}
-              {template.isPremium && !premium && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-2xl mb-2">🔒</div>
-                    <div className="text-sm font-medium">Premium Only</div>
-                  </div>
+              ) : template.isPremium && !premium ? (
+                <div className="mt-3 text-center">
+                  <Button className="w-full btn-primary text-sm py-2">
+                    Unlock Template
+                  </Button>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         ))}
@@ -232,6 +300,23 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect, selectedT
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedPaymentItem && (
+        <Modal isOpen={showPaymentModal} onClose={handlePaymentCancel} title="Unlock Premium Template">
+          <div className="p-6">
+            <div className="bg-gray-50 p-4 rounded-lg mb-6">
+              <h3 className="font-semibold text-gray-900">{selectedPaymentItem.name}</h3>
+              <p className="text-sm text-gray-600 mb-2">{selectedPaymentItem.description}</p>
+              <p className="text-2xl font-bold text-primary-600">${selectedPaymentItem.price}</p>
+            </div>
+            <PaymentForm 
+              onSuccess={handlePaymentSuccess}
+              onCancel={handlePaymentCancel}
+            />
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

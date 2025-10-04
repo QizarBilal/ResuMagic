@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
 import { v4 as uuidv4 } from 'uuid';
-import { hackathonSuggestions } from '../../data/sampleData';
+import Input from '../ui/Input';
+import Textarea from '../ui/Textarea';
+
 
 interface Hackathon {
   id: string;
@@ -24,10 +26,8 @@ interface Hackathon {
 }
 
 const HackathonsForm: React.FC = () => {
-  const { resumeData, updateHackathons, addToast, completeStep } = useResume();
+  const { resumeData, updateHackathons, addToast, completeStep, setCurrentStep, currentStep } = useResume();
   const [hackathonsList, setHackathonsList] = useState<Hackathon[]>(resumeData.hackathons || []);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [currentHackathon, setCurrentHackathon] = useState<Hackathon>({
     id: '',
     name: '',
@@ -47,20 +47,67 @@ const HackathonsForm: React.FC = () => {
     challenges: '',
     learnings: ''
   });
+  const [isEditing, setIsEditing] = useState(false);
   const [techInput, setTechInput] = useState('');
   const [achievementInput, setAchievementInput] = useState('');
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setCurrentHackathon(prev => ({
-      ...prev,
-      [name]: name === 'teamSize' ? parseInt(value) || 1 : value
-    }));
+  const popularHackathons = [
+    { name: 'HackMIT', organizer: 'MIT', category: 'University' },
+    { name: 'TechCrunch Disrupt Hackathon', organizer: 'TechCrunch', category: 'Industry' },
+    { name: 'AngelHack', organizer: 'AngelHack', category: 'Global' },
+    { name: 'NASA Space Apps Challenge', organizer: 'NASA', category: 'Space Tech' },
+    { name: 'Facebook Developer Challenge', organizer: 'Meta', category: 'Social Tech' },
+    { name: 'Google Hash Code', organizer: 'Google', category: 'Programming' },
+    { name: 'Amazon Alexa Challenge', organizer: 'Amazon', category: 'Voice AI' },
+    { name: 'Microsoft Imagine Cup', organizer: 'Microsoft', category: 'Student Innovation' },
+    { name: 'Devpost Hackathons', organizer: 'Devpost', category: 'Online' },
+    { name: 'Junction Hackathon', organizer: 'Junction', category: 'Europe' },
+    { name: 'PennApps', organizer: 'University of Pennsylvania', category: 'University' },
+    { name: 'TreeHacks', organizer: 'Stanford University', category: 'University' }
+  ];
+
+  const roleOptions = [
+    'Full-Stack Developer',
+    'Frontend Developer',
+    'Backend Developer',
+    'UI/UX Designer',
+    'Data Scientist',
+    'ML Engineer',
+    'Team Lead',
+    'Product Manager',
+    'DevOps Engineer',
+    'Mobile Developer'
+  ];
+
+  const durationOptions = [
+    '24 Hours',
+    '36 Hours',
+    '48 Hours',
+    '72 Hours',
+    '1 Week',
+    'Custom'
+  ];
+
+  const prizeOptions = [
+    'Winner - 1st Place',
+    'Runner-up - 2nd Place',
+    'Third Place',
+    'Best Technical Implementation',
+    'Best UI/UX Design',
+    'Best Innovation',
+    'People\'s Choice Award',
+    'Best Use of API',
+    'Best Mobile App',
+    'Best Web App',
+    'Participant'
+  ];
+
+  const handleInputChange = (field: keyof Hackathon, value: any) => {
+    setCurrentHackathon(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleTechKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && techInput.trim()) {
-      e.preventDefault();
+  const addTechnology = () => {
+    if (techInput.trim()) {
       setCurrentHackathon(prev => ({
         ...prev,
         technologies: [...prev.technologies, techInput.trim()]
@@ -69,9 +116,15 @@ const HackathonsForm: React.FC = () => {
     }
   };
 
-  const handleAchievementKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && achievementInput.trim()) {
-      e.preventDefault();
+  const removeTechnology = (tech: string) => {
+    setCurrentHackathon(prev => ({
+      ...prev,
+      technologies: prev.technologies.filter(t => t !== tech)
+    }));
+  };
+
+  const addAchievement = () => {
+    if (achievementInput.trim()) {
       setCurrentHackathon(prev => ({
         ...prev,
         achievements: [...prev.achievements, achievementInput.trim()]
@@ -80,72 +133,31 @@ const HackathonsForm: React.FC = () => {
     }
   };
 
-  const removeTechnology = (index: number) => {
+  const removeAchievement = (achievement: string) => {
     setCurrentHackathon(prev => ({
       ...prev,
-      technologies: prev.technologies.filter((_, i) => i !== index)
+      achievements: prev.achievements.filter(a => a !== achievement)
     }));
   };
 
-  const removeAchievement = (index: number) => {
-    setCurrentHackathon(prev => ({
-      ...prev,
-      achievements: prev.achievements.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleSelectSuggestion = (suggestion: any) => {
-    setCurrentHackathon({
-      id: uuidv4(),
-      name: suggestion.name,
-      organizer: suggestion.organizer,
-      location: suggestion.location,
-      date: '',
-      duration: suggestion.duration,
-      teamSize: suggestion.teamSize,
-      role: '',
-      projectTitle: '',
-      projectDescription: '',
-      technologies: suggestion.commonTechnologies || [],
-      achievements: [],
-      prize: '',
-      repositoryUrl: '',
-      demoUrl: '',
-      challenges: '',
-      learnings: ''
-    });
-    setIsModalOpen(false);
-    addToast({
-      type: 'success',
-      message: `${suggestion.name} template loaded! Add your specific details.`
-    });
-  };
-
-  const handleAddHackathon = () => {
-    if (!currentHackathon.name || !currentHackathon.projectTitle) {
+  const saveHackathon = () => {
+    if (!currentHackathon.name.trim() || !currentHackathon.organizer.trim()) {
       addToast({
         type: 'error',
-        message: 'Please fill in the hackathon name and project title.'
+        message: 'Please fill in hackathon name and organizer'
       });
       return;
     }
 
-    const hackathonData = {
-      ...currentHackathon,
-      id: isEditing ? currentHackathon.id : uuidv4()
-    };
-
     if (isEditing) {
-      const updatedList = hackathonsList.map(hack => 
-        hack.id === hackathonData.id ? hackathonData : hack
-      );
-      setHackathonsList(updatedList);
+      setHackathonsList(prev => prev.map(h => h.id === currentHackathon.id ? currentHackathon : h));
       addToast({
         type: 'success',
         message: 'Hackathon updated successfully!'
       });
     } else {
-      setHackathonsList([...hackathonsList, hackathonData]);
+      const newHackathon = { ...currentHackathon, id: uuidv4() };
+      setHackathonsList(prev => [...prev, newHackathon]);
       addToast({
         type: 'success',
         message: 'Hackathon added successfully!'
@@ -155,18 +167,16 @@ const HackathonsForm: React.FC = () => {
     resetForm();
   };
 
-  const handleEditHackathon = (hackathon: Hackathon) => {
+  const editHackathon = (hackathon: Hackathon) => {
     setCurrentHackathon(hackathon);
-    setTechInput('');
-    setAchievementInput('');
     setIsEditing(true);
   };
 
-  const handleDeleteHackathon = (id: string) => {
-    setHackathonsList(hackathonsList.filter(hack => hack.id !== id));
+  const deleteHackathon = (id: string) => {
+    setHackathonsList(prev => prev.filter(h => h.id !== id));
     addToast({
       type: 'success',
-      message: 'Hackathon removed successfully!'
+      message: 'Hackathon removed'
     });
   };
 
@@ -190,501 +200,480 @@ const HackathonsForm: React.FC = () => {
       challenges: '',
       learnings: ''
     });
+    setIsEditing(false);
     setTechInput('');
     setAchievementInput('');
-    setIsEditing(false);
   };
 
   const handleSave = () => {
     updateHackathons(hackathonsList);
+    completeStep(6);
     addToast({
       type: 'success',
-      message: 'Hackathons section saved successfully!'
+      message: 'Hackathons saved successfully!'
     });
-    completeStep(6);
+    
+    const nextStep = currentStep + 1;
+    setCurrentStep(nextStep);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
+
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const groupedHackathons = popularHackathons.reduce((acc, hackathon) => {
+    if (!acc[hackathon.category]) {
+      acc[hackathon.category] = [];
+    }
+    acc[hackathon.category].push(hackathon);
+    return acc;
+  }, {} as Record<string, typeof popularHackathons>);
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Hackathons</h1>
-        <p className="text-gray-600">
-          Showcase your hackathon experiences, projects, and achievements. Highlight your ability to work under pressure and create innovative solutions.
-        </p>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="btn-secondary"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Browse Popular Hackathons
-        </button>
-        <button 
-          onClick={resetForm}
-          className="btn-secondary"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Custom Hackathon
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Hackathon Form */}
-        <div className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            {isEditing ? 'Edit Hackathon' : 'Add Hackathon Experience'}
-          </h2>
-
-          <div className="space-y-6">
-            {/* Basic Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Hackathon Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={currentHackathon.name}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="e.g. HackMIT 2024"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Organizer
-                </label>
-                <input
-                  type="text"
-                  name="organizer"
-                  value={currentHackathon.organizer}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="e.g. MIT, Google, Microsoft"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={currentHackathon.location}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="e.g. Boston, MA or Online"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date
-                </label>
-                <input
-                  type="month"
-                  name="date"
-                  value={currentHackathon.date}
-                  onChange={handleInputChange}
-                  className="input-field"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Duration
-                </label>
-                <select
-                  name="duration"
-                  value={currentHackathon.duration}
-                  onChange={handleInputChange}
-                  className="input-field"
-                >
-                  <option value="">Select duration</option>
-                  <option value="24 hours">24 hours</option>
-                  <option value="36 hours">36 hours</option>
-                  <option value="48 hours">48 hours</option>
-                  <option value="72 hours">72 hours</option>
-                  <option value="1 week">1 week</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Team Size
-                </label>
-                <input
-                  type="number"
-                  name="teamSize"
-                  value={currentHackathon.teamSize}
-                  onChange={handleInputChange}
-                  min="1"
-                  max="10"
-                  className="input-field"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Role
-                </label>
-                <input
-                  type="text"
-                  name="role"
-                  value={currentHackathon.role}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="e.g. Team Lead, Developer"
-                />
-              </div>
-            </div>
-
-            {/* Project Details */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project Title *
-              </label>
-              <input
-                type="text"
-                name="projectTitle"
-                value={currentHackathon.projectTitle}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="e.g. EcoTracker - Carbon Footprint Monitor"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project Description
-              </label>
-              <textarea
-                name="projectDescription"
-                value={currentHackathon.projectDescription}
-                onChange={handleInputChange}
-                rows={3}
-                className="input-field resize-none"
-                placeholder="Describe your project, its purpose, and main features..."
-              />
-            </div>
-
-            {/* Technologies */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Technologies Used
-              </label>
-              <input
-                type="text"
-                value={techInput}
-                onChange={(e) => setTechInput(e.target.value)}
-                onKeyPress={handleTechKeyPress}
-                className="input-field"
-                placeholder="Type technology and press Enter (e.g. React, Python, MongoDB)"
-              />
-              {currentHackathon.technologies.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {currentHackathon.technologies.map((tech, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center bg-primary-100 text-primary-800 text-sm px-3 py-1 rounded-full"
-                    >
-                      {tech}
-                      <button
-                        onClick={() => removeTechnology(index)}
-                        className="ml-2 text-primary-600 hover:text-primary-800"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Achievements */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Key Achievements
-              </label>
-              <input
-                type="text"
-                value={achievementInput}
-                onChange={(e) => setAchievementInput(e.target.value)}
-                onKeyPress={handleAchievementKeyPress}
-                className="input-field"
-                placeholder="Type achievement and press Enter"
-              />
-              {currentHackathon.achievements.length > 0 && (
-                <div className="space-y-1 mt-2">
-                  {currentHackathon.achievements.map((achievement, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between bg-gray-50 p-2 rounded"
-                    >
-                      <span className="text-sm text-gray-700">• {achievement}</span>
-                      <button
-                        onClick={() => removeAchievement(index)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Prize and Links */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prize/Recognition
-              </label>
-              <input
-                type="text"
-                name="prize"
-                value={currentHackathon.prize}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="e.g. 1st Place, Best Innovation Award"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Repository URL
-                </label>
-                <input
-                  type="url"
-                  name="repositoryUrl"
-                  value={currentHackathon.repositoryUrl}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="https://github.com/username/project"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Demo URL
-                </label>
-                <input
-                  type="url"
-                  name="demoUrl"
-                  value={currentHackathon.demoUrl}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="https://project-demo.com"
-                />
-              </div>
-            </div>
-
-            {/* Challenges and Learnings */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Challenges Faced
-              </label>
-              <textarea
-                name="challenges"
-                value={currentHackathon.challenges}
-                onChange={handleInputChange}
-                rows={2}
-                className="input-field resize-none"
-                placeholder="What challenges did you overcome during the hackathon?"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Key Learnings
-              </label>
-              <textarea
-                name="learnings"
-                value={currentHackathon.learnings}
-                onChange={handleInputChange}
-                rows={2}
-                className="input-field resize-none"
-                placeholder="What did you learn from this experience?"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex space-x-3">
-              <button onClick={handleAddHackathon} className="btn-primary flex-1">
-                {isEditing ? 'Update Hackathon' : 'Add Hackathon'}
-              </button>
-              {isEditing && (
-                <button onClick={resetForm} className="btn-secondary">
-                  Cancel
-                </button>
-              )}
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary-50/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Professional Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-primary-600 to-highlight-500 rounded-2xl mb-6 shadow-xl">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
           </div>
+          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary-600 to-highlight-500 bg-clip-text text-transparent mb-4">
+            Hackathons
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Showcase your innovation, teamwork, and rapid development skills
+          </p>
         </div>
 
-        {/* Hackathons List */}
-        <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-gray-900">Added Hackathons</h2>
-          
-          {hackathonsList.length === 0 ? (
-            <div className="card text-center py-8">
-              <div className="text-4xl mb-4">🏆</div>
-              <p className="text-gray-500 mb-4">No hackathons added yet. Showcase your innovative projects!</p>
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="btn-primary"
-              >
-                Browse Popular Hackathons
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {hackathonsList.map((hackathon) => (
-                <div key={hackathon.id} className="card">
-                  <div className="flex justify-between items-start mb-3">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Form */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Hackathon Form */}
+            <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-8">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {isEditing ? 'Edit Hackathon' : 'Add Hackathon'}
+                </h2>
+                <p className="text-gray-600">Share your hackathon experiences and achievements.</p>
+              </div>
+
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input
+                    label="Hackathon Name"
+                    type="text"
+                    value={currentHackathon.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="HackMIT 2023"
+                    required
+                    leftIcon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    }
+                  />
+
+                  <Input
+                    label="Organizer"
+                    type="text"
+                    value={currentHackathon.organizer}
+                    onChange={(e) => handleInputChange('organizer', e.target.value)}
+                    placeholder="MIT"
+                    required
+                    leftIcon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Input
+                    label="Location"
+                    type="text"
+                    value={currentHackathon.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    placeholder="Cambridge, MA"
+                    leftIcon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    }
+                  />
+
+                  <Input
+                    label="Date"
+                    type="month"
+                    value={currentHackathon.date}
+                    onChange={(e) => handleInputChange('date', e.target.value)}
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
+                    <select
+                      value={currentHackathon.duration}
+                      onChange={(e) => handleInputChange('duration', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                    >
+                      <option value="">Select Duration</option>
+                      {durationOptions.map(duration => (
+                        <option key={duration} value={duration}>{duration}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input
+                    label="Team Size"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={currentHackathon.teamSize.toString()}
+                    onChange={(e) => handleInputChange('teamSize', parseInt(e.target.value) || 1)}
+                    placeholder="4"
+                    leftIcon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                    }
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Your Role</label>
+                    <select
+                      value={currentHackathon.role}
+                      onChange={(e) => handleInputChange('role', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                    >
+                      <option value="">Select Role</option>
+                      {roleOptions.map(role => (
+                        <option key={role} value={role}>{role}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Project Details */}
+                <div className="border-t border-gray-200 pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Details</h3>
+                  
+                  <div className="space-y-6">
+                    <Input
+                      label="Project Title"
+                      type="text"
+                      value={currentHackathon.projectTitle}
+                      onChange={(e) => handleInputChange('projectTitle', e.target.value)}
+                      placeholder="AI-Powered Study Assistant"
+                      leftIcon={
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                      }
+                    />
+
+                    <Textarea
+                      label="Project Description"
+                      value={currentHackathon.projectDescription}
+                      onChange={(e) => handleInputChange('projectDescription', e.target.value)}
+                      placeholder="Describe your project, its purpose, and key features..."
+                      rows={4}
+                    />
+
+                    {/* Technologies */}
                     <div>
-                      <h3 className="font-semibold text-gray-900">{hackathon.name}</h3>
-                      <p className="text-sm text-gray-600">{hackathon.organizer}</p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditHackathon(hackathon)}
-                        className="text-primary-600 hover:text-primary-800 text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteHackathon(hackathon.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <h4 className="font-medium text-gray-900 mb-2">{hackathon.projectTitle}</h4>
-                  <p className="text-gray-600 text-sm mb-3">{hackathon.projectDescription}</p>
-                  
-                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                    <div>📍 {hackathon.location}</div>
-                    <div>📅 {hackathon.date}</div>
-                    <div>⏰ {hackathon.duration}</div>
-                    <div>👥 Team of {hackathon.teamSize}</div>
-                  </div>
-
-                  {hackathon.prize && (
-                    <div className="bg-yellow-50 text-yellow-800 text-sm px-3 py-1 rounded-full inline-block mb-3">
-                      🏆 {hackathon.prize}
-                    </div>
-                  )}
-
-                  {hackathon.technologies.length > 0 && (
-                    <div className="mb-3">
-                      <div className="flex flex-wrap gap-1">
-                        {hackathon.technologies.map((tech, index) => (
-                          <span key={index} className="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Technologies Used</label>
+                      <div className="flex gap-2 mb-3">
+                        <input
+                          type="text"
+                          value={techInput}
+                          onChange={(e) => setTechInput(e.target.value)}
+                          placeholder="React, Node.js, MongoDB"
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          onKeyPress={(e) => e.key === 'Enter' && addTechnology()}
+                        />
+                        <button
+                          type="button"
+                          onClick={addTechnology}
+                          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                        >
+                          Add
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {currentHackathon.technologies.map((tech, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm"
+                          >
                             {tech}
+                            <button
+                              type="button"
+                              onClick={() => removeTechnology(tech)}
+                              className="ml-2 text-primary-600 hover:text-primary-800"
+                            >
+                              ×
+                            </button>
                           </span>
                         ))}
                       </div>
                     </div>
-                  )}
 
-                  <div className="flex space-x-4">
-                    {hackathon.repositoryUrl && (
-                      <a 
-                        href={hackathon.repositoryUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary-600 hover:text-primary-800 text-sm"
+                    {/* Achievements */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Key Achievements</label>
+                      <div className="flex gap-2 mb-3">
+                        <input
+                          type="text"
+                          value={achievementInput}
+                          onChange={(e) => setAchievementInput(e.target.value)}
+                          placeholder="Won Best Innovation Award"
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          onKeyPress={(e) => e.key === 'Enter' && addAchievement()}
+                        />
+                        <button
+                          type="button"
+                          onClick={addAchievement}
+                          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                        >
+                          Add
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {currentHackathon.achievements.map((achievement, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
+                          >
+                            <span className="text-green-800">{achievement}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeAchievement(achievement)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Prize/Recognition</label>
+                      <select
+                        value={currentHackathon.prize}
+                        onChange={(e) => handleInputChange('prize', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                       >
-                        GitHub
-                      </a>
-                    )}
-                    {hackathon.demoUrl && (
-                      <a 
-                        href={hackathon.demoUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary-600 hover:text-primary-800 text-sm"
-                      >
-                        Demo
-                      </a>
-                    )}
+                        <option value="">Select Prize/Recognition</option>
+                        {prizeOptions.map(prize => (
+                          <option key={prize} value={prize}>{prize}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Input
+                        label="Repository URL"
+                        type="url"
+                        value={currentHackathon.repositoryUrl}
+                        onChange={(e) => handleInputChange('repositoryUrl', e.target.value)}
+                        placeholder="https://github.com/username/project"
+                        leftIcon={
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                        }
+                      />
+
+                      <Input
+                        label="Demo URL"
+                        type="url"
+                        value={currentHackathon.demoUrl}
+                        onChange={(e) => handleInputChange('demoUrl', e.target.value)}
+                        placeholder="https://demo.example.com"
+                        leftIcon={
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        }
+                      />
+                    </div>
+
+                    <Textarea
+                      label="Challenges Faced"
+                      value={currentHackathon.challenges}
+                      onChange={(e) => handleInputChange('challenges', e.target.value)}
+                      placeholder="What were the main technical or team challenges you overcame?"
+                      rows={3}
+                    />
+
+                    <Textarea
+                      label="Key Learnings"
+                      value={currentHackathon.learnings}
+                      onChange={(e) => handleInputChange('learnings', e.target.value)}
+                      placeholder="What did you learn from this hackathon experience?"
+                      rows={3}
+                    />
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Popular Hackathons Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-gray-900">Popular Hackathons</h3>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={saveHackathon}
+                    className="bg-gradient-to-r from-primary-600 to-highlight-500 hover:from-primary-700 hover:to-highlight-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
+                    {isEditing ? 'Update Hackathon' : 'Add Hackathon'}
+                  </button>
+                  
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-            
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {hackathonSuggestions.map((suggestion, index) => (
-                  <div key={index} className="card cursor-pointer hover:shadow-lg transition-shadow"
-                       onClick={() => handleSelectSuggestion(suggestion)}>
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-gray-900">{suggestion.name}</h4>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        suggestion.category === 'Environmental' ? 'bg-green-100 text-green-800' :
-                        suggestion.category === 'Artificial Intelligence' ? 'bg-purple-100 text-purple-800' :
-                        suggestion.category === 'Financial Technology' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {suggestion.category}
-                      </span>
+
+            {/* Hackathons List */}
+            {hackathonsList.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-8">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Hackathons</h2>
+                  <p className="text-gray-600">Review and manage your hackathon experiences.</p>
+                </div>
+
+                <div className="space-y-6">
+                  {hackathonsList.map((hackathon) => (
+                    <div key={hackathon.id} className="border border-gray-200 rounded-lg p-6 hover:border-primary-300 transition-colors">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-bold text-gray-900">{hackathon.name}</h3>
+                            {hackathon.prize && (
+                              <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                                {hackathon.prize}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-primary-600 font-medium mb-1">{hackathon.organizer}</p>
+                          <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
+                            {hackathon.location && <span>📍 {hackathon.location}</span>}
+                            {hackathon.date && <span>📅 {new Date(hackathon.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>}
+                            {hackathon.duration && <span>⏱️ {hackathon.duration}</span>}
+                            {hackathon.teamSize && <span>👥 Team of {hackathon.teamSize}</span>}
+                            {hackathon.role && <span>🎯 {hackathon.role}</span>}
+                          </div>
+                          {hackathon.projectTitle && (
+                            <div className="mb-3">
+                              <h4 className="font-semibold text-gray-900 mb-1">Project: {hackathon.projectTitle}</h4>
+                              {hackathon.projectDescription && (
+                                <p className="text-gray-700 mb-2">{hackathon.projectDescription}</p>
+                              )}
+                            </div>
+                          )}
+                          
+                          {hackathon.technologies.length > 0 && (
+                            <div className="mb-3">
+                              <h5 className="font-medium text-gray-700 mb-2">Technologies:</h5>
+                              <div className="flex flex-wrap gap-2">
+                                {hackathon.technologies.map((tech, index) => (
+                                  <span
+                                    key={index}
+                                    className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm"
+                                  >
+                                    {tech}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {hackathon.achievements.length > 0 && (
+                            <div className="mb-3">
+                              <h5 className="font-medium text-gray-700 mb-2">Achievements:</h5>
+                              <ul className="list-disc list-inside space-y-1">
+                                {hackathon.achievements.map((achievement, index) => (
+                                  <li key={index} className="text-gray-700">{achievement}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          <div className="flex gap-4 text-sm">
+                            {hackathon.repositoryUrl && (
+                              <a
+                                href={hackathon.repositoryUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary-600 hover:text-primary-800 font-medium"
+                              >
+                                View Code →
+                              </a>
+                            )}
+                            {hackathon.demoUrl && (
+                              <a
+                                href={hackathon.demoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary-600 hover:text-primary-800 font-medium"
+                              >
+                                Live Demo →
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => editHackathon(hackathon)}
+                            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => deleteHackathon(hackathon.id)}
+                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{suggestion.organizer}</p>
-                    <p className="text-xs text-gray-500 mb-3">Difficulty: {suggestion.difficulty}</p>
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>📍 {suggestion.format}</span>
-                      <span>⏰ {suggestion.duration}</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
+            )}
+
+            {/* Save Button */}
+            <div className="flex justify-end">
+              <button 
+                onClick={handleSave} 
+                className="bg-gradient-to-r from-primary-600 to-highlight-500 hover:from-primary-700 hover:to-highlight-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+              >
+                Save & Continue
+              </button>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Navigation */}
-      <div className="mt-8 flex justify-between">
-        <button className="btn-secondary" onClick={() => completeStep(6)}>
-          Skip This Step
-        </button>
-        <button onClick={handleSave} className="btn-primary">
-          Save & Continue
-        </button>
+
+        </div>
       </div>
     </div>
   );

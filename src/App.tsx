@@ -19,7 +19,8 @@ import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import Dashboard from './pages/Dashboard';
-import Premium from './pages/Premium';
+import Premium from './pages/Pricing';
+import Pricing from './pages/Pricing';
 import NotFound from './pages/NotFound';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
@@ -57,6 +58,7 @@ const AppContent: React.FC = () => {
           {/* User Routes */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/premium" element={<Premium />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/account" element={<Account />} />
           
           {/* Legal Pages */}

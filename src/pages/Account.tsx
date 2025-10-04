@@ -232,7 +232,7 @@ const Account: React.FC = () => {
       <div className="border-t pt-6">
         <div className="flex flex-col sm:flex-row gap-4">
           {userProfile.subscription === 'free' ? (
-            <Link to="/premium" className="btn-primary px-6 py-3 text-center">
+            <Link to="/pricing#best-value" className="btn-primary px-6 py-3 text-center">
               Upgrade to Premium
             </Link>
           ) : (

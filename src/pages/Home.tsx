@@ -1,35 +1,43 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
+
+  const scrollToTopAndNavigate = (path: string) => {
+    navigate(path);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
   return (
     <div className="min-h-screen bg-white">
       {/* Professional Hero Section - Mobile Optimized */}
-      <section className="min-h-screen flex items-center bg-gradient-to-br from-white via-gray-50/50 to-primary-50/30 py-12 sm:py-16">
+      <section className="bg-gradient-to-br from-white via-gray-50/50 to-primary-50/30 pt-8 pb-16 sm:pt-12 sm:pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-center">
             
             {/* Left Content - Mobile First */}
             <div className="lg:col-span-3 text-center lg:text-left order-2 lg:order-1">
-              <div className="mb-6 sm:mb-8">
-                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight">
+              <div className="mb-6 sm:mb-8 lg:mb-6">
+                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 lg:mb-4 leading-tight">
                   <span className="bg-gradient-to-r from-primary-600 via-highlight-500 to-primary-700 bg-clip-text text-transparent">
                     ResuMagic
                   </span>
                 </h1>
                 
-                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-gray-800 mb-4 sm:mb-6 leading-tight px-2 sm:px-0">
+                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-gray-800 mb-5 sm:mb-7 lg:mb-5 leading-tight px-2 sm:px-0">
                   Build Your <span className="text-primary-600">Dream Resume</span> in Minutes
                 </h2>
                 
-                <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0">
+                <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 lg:mb-6 leading-relaxed max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0">
                   Create stunning, ATS-friendly resumes with professional tools. 
                   Join thousands who've landed their dream jobs.
                 </p>
               </div>
 
               {/* Action Buttons - Mobile Optimized */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-center lg:justify-start mb-6 sm:mb-8 px-4 sm:px-0">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-center lg:justify-start mb-6 sm:mb-8 lg:mb-6 px-4 sm:px-0">
                 <Link
                   to="/resume-builder?plan=free"
                   className="bg-gradient-to-r from-primary-600 to-highlight-500 hover:from-primary-700 hover:to-highlight-600 text-white font-bold py-4 sm:py-5 px-6 sm:px-10 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200 text-base sm:text-lg text-center"
@@ -45,7 +53,7 @@ const Home: React.FC = () => {
               </div>
 
               {/* Trust Indicators - Mobile Optimized */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-xl mx-auto lg:mx-0 px-4 sm:px-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-7 max-w-xl mx-auto lg:mx-0 px-4 sm:px-0">
                 <div className="flex items-center justify-center lg:justify-start">
                   <div className="w-10 sm:w-12 h-10 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
                     <svg className="w-5 sm:w-6 h-5 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,8 +61,8 @@ const Home: React.FC = () => {
                     </svg>
                   </div>
                   <div className="min-w-0">
-                    <div className="font-semibold text-gray-900 text-sm sm:text-base">Privacy First</div>
-                    <div className="text-xs sm:text-sm text-gray-600">Your data is safe</div>
+                    <div className="font-semibold text-gray-900 text-sm sm:text-base leading-relaxed">Privacy First</div>
+                    <div className="text-xs sm:text-sm text-gray-600 mt-1">Your data is safe</div>
                   </div>
                 </div>
                 
@@ -65,8 +73,8 @@ const Home: React.FC = () => {
                     </svg>
                   </div>
                   <div className="min-w-0">
-                    <div className="font-semibold text-gray-900 text-sm sm:text-base">Lightning Fast</div>
-                    <div className="text-xs sm:text-sm text-gray-600">Ready in 5 minutes</div>
+                    <div className="font-semibold text-gray-900 text-sm sm:text-base leading-relaxed">Lightning Fast</div>
+                    <div className="text-xs sm:text-sm text-gray-600 mt-1">Ready in 5 minutes</div>
                   </div>
                 </div>
               </div>
@@ -276,18 +284,18 @@ const Home: React.FC = () => {
               Join thousands of professionals who have advanced their careers with ResuMagic
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/resume-builder"
+              <button
+                onClick={() => scrollToTopAndNavigate('/resume-builder')}
                 className="bg-white text-primary-600 px-8 py-4 font-semibold hover:bg-gray-100 transition-colors duration-200 rounded-lg shadow-lg"
               >
                 Start Building Free
-              </Link>
-              <Link
-                to="/premium"
+              </button>
+              <button
+                onClick={() => scrollToTopAndNavigate('/pricing')}
                 className="bg-white/20 backdrop-blur-sm border border-white/30 text-white px-8 py-4 font-semibold hover:bg-white/30 transition-colors duration-200 rounded-lg"
               >
                 View Premium Plans
-              </Link>
+              </button>
             </div>
           </div>
         </div>

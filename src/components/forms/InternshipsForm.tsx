@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
 import { v4 as uuidv4 } from 'uuid';
-import { internshipSuggestions } from '../../data/sampleData';
+import Input from '../ui/Input';
+import Textarea from '../ui/Textarea';
+
 
 interface Internship {
   id: string;
@@ -30,10 +32,8 @@ interface Internship {
 }
 
 const InternshipsForm: React.FC = () => {
-  const { resumeData, updateInternships, addToast, completeStep } = useResume();
+  const { resumeData, updateInternships, addToast, completeStep, setCurrentStep, currentStep } = useResume();
   const [internshipsList, setInternshipsList] = useState<Internship[]>(resumeData.internships || []);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [currentInternship, setCurrentInternship] = useState<Internship>({
     id: '',
     company: '',
@@ -43,8 +43,8 @@ const InternshipsForm: React.FC = () => {
     startDate: '',
     endDate: '',
     isCurrentRole: false,
-    employmentType: 'Internship',
-    workMode: 'On-site',
+    employmentType: '',
+    workMode: '',
     supervisor: '',
     description: '',
     responsibilities: [],
@@ -59,123 +59,189 @@ const InternshipsForm: React.FC = () => {
     companySize: '',
     industry: ''
   });
+  const [isEditing, setIsEditing] = useState(false);
   const [responsibilityInput, setResponsibilityInput] = useState('');
   const [achievementInput, setAchievementInput] = useState('');
   const [skillInput, setSkillInput] = useState('');
   const [techInput, setTechInput] = useState('');
   const [projectInput, setProjectInput] = useState('');
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
+  const topInternshipCompanies = [
+    { company: 'Google', industry: 'Technology', size: 'Large (10,000+)' },
+    { company: 'Microsoft', industry: 'Technology', size: 'Large (10,000+)' },
+    { company: 'Amazon', industry: 'E-commerce/Cloud', size: 'Large (10,000+)' },
+    { company: 'Meta (Facebook)', industry: 'Social Media', size: 'Large (10,000+)' },
+    { company: 'Apple', industry: 'Technology/Hardware', size: 'Large (10,000+)' },
+    { company: 'Netflix', industry: 'Entertainment/Tech', size: 'Large (10,000+)' },
+    { company: 'Tesla', industry: 'Automotive/Energy', size: 'Large (10,000+)' },
+    { company: 'Goldman Sachs', industry: 'Financial Services', size: 'Large (10,000+)' },
+    { company: 'JP Morgan Chase', industry: 'Banking', size: 'Large (10,000+)' },
+    { company: 'McKinsey & Company', industry: 'Consulting', size: 'Large (10,000+)' },
+    { company: 'Deloitte', industry: 'Consulting', size: 'Large (10,000+)' },
+    { company: 'IBM', industry: 'Technology', size: 'Large (10,000+)' }
+  ];
+
+  const internshipPositions = [
+    'Software Engineering Intern',
+    'Data Science Intern',
+    'Product Management Intern',
+    'Marketing Intern',
+    'Business Analyst Intern',
+    'UI/UX Design Intern',
+    'Research Intern',
+    'Sales Intern',
+    'Finance Intern',
+    'Human Resources Intern',
+    'Operations Intern',
+    'Consulting Intern'
+  ];
+
+  const employmentTypes = [
+    'Full-time Internship',
+    'Part-time Internship',
+    'Summer Internship',
+    'Co-op Program',
+    'Research Internship',
+    'Virtual Internship'
+  ];
+
+  const workModes = [
+    'On-site',
+    'Remote',
+    'Hybrid',
+    'Flexible'
+  ];
+
+  const companySizes = [
+    'Startup (1-50)',
+    'Small (51-200)',
+    'Medium (201-1000)',
+    'Large (1001-5000)',
+    'Enterprise (5000+)'
+  ];
+
+  const industries = [
+    'Technology',
+    'Financial Services',
+    'Healthcare',
+    'E-commerce',
+    'Consulting',
+    'Manufacturing',
+    'Media & Entertainment',
+    'Education',
+    'Government',
+    'Non-profit',
+    'Retail',
+    'Transportation'
+  ];
+
+  const handleInputChange = (field: keyof Internship, value: any) => {
+    setCurrentInternship(prev => ({ ...prev, [field]: value }));
+  };
+
+  const addResponsibility = () => {
+    if (responsibilityInput.trim()) {
       setCurrentInternship(prev => ({
         ...prev,
-        [name]: checked,
-        endDate: checked ? '' : prev.endDate
+        responsibilities: [...prev.responsibilities, responsibilityInput.trim()]
       }));
-    } else {
-      setCurrentInternship(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setResponsibilityInput('');
     }
   };
 
-  const handleArrayInput = (
-    input: string, 
-    setInput: React.Dispatch<React.SetStateAction<string>>, 
-    arrayKey: keyof Pick<Internship, 'responsibilities' | 'achievements' | 'skillsGained' | 'technologies' | 'projects'>
-  ) => {
-    if (input.trim()) {
-      setCurrentInternship(prev => ({
-        ...prev,
-        [arrayKey]: [...(prev[arrayKey] as string[]), input.trim()]
-      }));
-      setInput('');
-    }
-  };
-
-  const removeArrayItem = (
-    index: number, 
-    arrayKey: keyof Pick<Internship, 'responsibilities' | 'achievements' | 'skillsGained' | 'technologies' | 'projects'>
-  ) => {
+  const removeResponsibility = (responsibility: string) => {
     setCurrentInternship(prev => ({
       ...prev,
-      [arrayKey]: (prev[arrayKey] as string[]).filter((_, i) => i !== index)
+      responsibilities: prev.responsibilities.filter(r => r !== responsibility)
     }));
   };
 
-  const handleKeyPress = (
-    e: React.KeyboardEvent,
-    input: string,
-    setInput: React.Dispatch<React.SetStateAction<string>>,
-    arrayKey: keyof Pick<Internship, 'responsibilities' | 'achievements' | 'skillsGained' | 'technologies' | 'projects'>
-  ) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleArrayInput(input, setInput, arrayKey);
+  const addAchievement = () => {
+    if (achievementInput.trim()) {
+      setCurrentInternship(prev => ({
+        ...prev,
+        achievements: [...prev.achievements, achievementInput.trim()]
+      }));
+      setAchievementInput('');
     }
   };
 
-  const handleSelectSuggestion = (suggestion: any) => {
-    setCurrentInternship({
-      id: uuidv4(),
-      company: suggestion.company,
-      position: suggestion.position,
-      department: suggestion.department || '',
-      location: suggestion.location,
-      startDate: '',
-      endDate: '',
-      isCurrentRole: false,
-      employmentType: 'Internship',
-      workMode: suggestion.workMode || 'On-site',
-      supervisor: '',
-      description: suggestion.description || '',
-      responsibilities: suggestion.commonResponsibilities || [],
-      achievements: [],
-      skillsGained: suggestion.skillsGained || [],
-      technologies: suggestion.technologies || [],
-      projects: [],
-      mentorship: '',
-      networking: '',
-      recommendation: '',
-      stipend: suggestion.stipend || '',
-      companySize: suggestion.companySize || '',
-      industry: suggestion.industry || ''
-    });
-    setIsModalOpen(false);
-    addToast({
-      type: 'success',
-      message: `${suggestion.company} internship template loaded! Add your specific details.`
-    });
+  const removeAchievement = (achievement: string) => {
+    setCurrentInternship(prev => ({
+      ...prev,
+      achievements: prev.achievements.filter(a => a !== achievement)
+    }));
   };
 
-  const handleAddInternship = () => {
-    if (!currentInternship.company || !currentInternship.position) {
+  const addSkill = () => {
+    if (skillInput.trim()) {
+      setCurrentInternship(prev => ({
+        ...prev,
+        skillsGained: [...prev.skillsGained, skillInput.trim()]
+      }));
+      setSkillInput('');
+    }
+  };
+
+  const removeSkill = (skill: string) => {
+    setCurrentInternship(prev => ({
+      ...prev,
+      skillsGained: prev.skillsGained.filter(s => s !== skill)
+    }));
+  };
+
+  const addTechnology = () => {
+    if (techInput.trim()) {
+      setCurrentInternship(prev => ({
+        ...prev,
+        technologies: [...prev.technologies, techInput.trim()]
+      }));
+      setTechInput('');
+    }
+  };
+
+  const removeTechnology = (tech: string) => {
+    setCurrentInternship(prev => ({
+      ...prev,
+      technologies: prev.technologies.filter(t => t !== tech)
+    }));
+  };
+
+  const addProject = () => {
+    if (projectInput.trim()) {
+      setCurrentInternship(prev => ({
+        ...prev,
+        projects: [...prev.projects, projectInput.trim()]
+      }));
+      setProjectInput('');
+    }
+  };
+
+  const removeProject = (project: string) => {
+    setCurrentInternship(prev => ({
+      ...prev,
+      projects: prev.projects.filter(p => p !== project)
+    }));
+  };
+
+  const saveInternship = () => {
+    if (!currentInternship.company.trim() || !currentInternship.position.trim()) {
       addToast({
         type: 'error',
-        message: 'Please fill in the company name and position.'
+        message: 'Please fill in company name and position'
       });
       return;
     }
 
-    const internshipData = {
-      ...currentInternship,
-      id: isEditing ? currentInternship.id : uuidv4()
-    };
-
     if (isEditing) {
-      const updatedList = internshipsList.map(intern => 
-        intern.id === internshipData.id ? internshipData : intern
-      );
-      setInternshipsList(updatedList);
+      setInternshipsList(prev => prev.map(i => i.id === currentInternship.id ? currentInternship : i));
       addToast({
         type: 'success',
         message: 'Internship updated successfully!'
       });
     } else {
-      setInternshipsList([...internshipsList, internshipData]);
+      const newInternship = { ...currentInternship, id: uuidv4() };
+      setInternshipsList(prev => [...prev, newInternship]);
       addToast({
         type: 'success',
         message: 'Internship added successfully!'
@@ -185,21 +251,16 @@ const InternshipsForm: React.FC = () => {
     resetForm();
   };
 
-  const handleEditInternship = (internship: Internship) => {
+  const editInternship = (internship: Internship) => {
     setCurrentInternship(internship);
-    setResponsibilityInput('');
-    setAchievementInput('');
-    setSkillInput('');
-    setTechInput('');
-    setProjectInput('');
     setIsEditing(true);
   };
 
-  const handleDeleteInternship = (id: string) => {
-    setInternshipsList(internshipsList.filter(intern => intern.id !== id));
+  const deleteInternship = (id: string) => {
+    setInternshipsList(prev => prev.filter(i => i.id !== id));
     addToast({
       type: 'success',
-      message: 'Internship removed successfully!'
+      message: 'Internship removed'
     });
   };
 
@@ -213,8 +274,8 @@ const InternshipsForm: React.FC = () => {
       startDate: '',
       endDate: '',
       isCurrentRole: false,
-      employmentType: 'Internship',
-      workMode: 'On-site',
+      employmentType: '',
+      workMode: '',
       supervisor: '',
       description: '',
       responsibilities: [],
@@ -229,600 +290,639 @@ const InternshipsForm: React.FC = () => {
       companySize: '',
       industry: ''
     });
+    setIsEditing(false);
     setResponsibilityInput('');
     setAchievementInput('');
     setSkillInput('');
     setTechInput('');
     setProjectInput('');
-    setIsEditing(false);
   };
 
   const handleSave = () => {
     updateInternships(internshipsList);
+    completeStep(7);
     addToast({
       type: 'success',
-      message: 'Internships section saved successfully!'
+      message: 'Internships saved successfully!'
     });
-    completeStep(7);
+    
+    const nextStep = currentStep + 1;
+    setCurrentStep(nextStep);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
+
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const groupedCompanies = topInternshipCompanies.reduce((acc, company) => {
+    if (!acc[company.industry]) {
+      acc[company.industry] = [];
+    }
+    acc[company.industry].push(company);
+    return acc;
+  }, {} as Record<string, typeof topInternshipCompanies>);
+
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Internships</h1>
-        <p className="text-gray-600">
-          Document your internship experiences, responsibilities, and professional growth. Highlight the skills you've gained and impact you've made.
-        </p>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="btn-secondary"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h6m-6 4h6m-5 4h5" />
-          </svg>
-          Browse Company Templates
-        </button>
-        <button 
-          onClick={resetForm}
-          className="btn-secondary"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Custom Internship
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Internship Form */}
-        <div className="lg:col-span-2 card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            {isEditing ? 'Edit Internship' : 'Add Internship Experience'}
-          </h2>
-
-          <div className="space-y-6">
-            {/* Basic Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Name *
-                </label>
-                <input
-                  type="text"
-                  name="company"
-                  value={currentInternship.company}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="e.g. Google, Microsoft, Facebook"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Position Title *
-                </label>
-                <input
-                  type="text"
-                  name="position"
-                  value={currentInternship.position}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="e.g. Software Engineering Intern"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Department
-                </label>
-                <input
-                  type="text"
-                  name="department"
-                  value={currentInternship.department}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="e.g. Engineering, Marketing, HR"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={currentInternship.location}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="e.g. San Francisco, CA"
-                />
-              </div>
-            </div>
-
-            {/* Employment Details */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Employment Type
-                </label>
-                <select
-                  name="employmentType"
-                  value={currentInternship.employmentType}
-                  onChange={handleInputChange}
-                  className="input-field"
-                >
-                  <option value="Internship">Internship</option>
-                  <option value="Co-op">Co-op</option>
-                  <option value="Summer Internship">Summer Internship</option>
-                  <option value="Part-time">Part-time</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Work Mode
-                </label>
-                <select
-                  name="workMode"
-                  value={currentInternship.workMode}
-                  onChange={handleInputChange}
-                  className="input-field"
-                >
-                  <option value="On-site">On-site</option>
-                  <option value="Remote">Remote</option>
-                  <option value="Hybrid">Hybrid</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Industry
-                </label>
-                <input
-                  type="text"
-                  name="industry"
-                  value={currentInternship.industry}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="e.g. Technology, Finance"
-                />
-              </div>
-            </div>
-
-            {/* Dates */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="month"
-                  name="startDate"
-                  value={currentInternship.startDate}
-                  onChange={handleInputChange}
-                  className="input-field"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  End Date
-                </label>
-                <input
-                  type="month"
-                  name="endDate"
-                  value={currentInternship.endDate}
-                  onChange={handleInputChange}
-                  disabled={currentInternship.isCurrentRole}
-                  className="input-field"
-                />
-                <div className="flex items-center mt-2">
-                  <input
-                    type="checkbox"
-                    name="isCurrentRole"
-                    checked={currentInternship.isCurrentRole}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  />
-                  <label className="ml-2 block text-sm text-gray-700">
-                    Currently working here
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Role Description
-              </label>
-              <textarea
-                name="description"
-                value={currentInternship.description}
-                onChange={handleInputChange}
-                rows={3}
-                className="input-field resize-none"
-                placeholder="Brief overview of your role and the team/department you worked with..."
-              />
-            </div>
-
-            {/* Responsibilities */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Key Responsibilities
-              </label>
-              <input
-                type="text"
-                value={responsibilityInput}
-                onChange={(e) => setResponsibilityInput(e.target.value)}
-                onKeyPress={(e) => handleKeyPress(e, responsibilityInput, setResponsibilityInput, 'responsibilities')}
-                className="input-field"
-                placeholder="Type responsibility and press Enter"
-              />
-              {currentInternship.responsibilities.length > 0 && (
-                <div className="space-y-1 mt-2">
-                  {currentInternship.responsibilities.map((resp, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                      <span className="text-sm text-gray-700">• {resp}</span>
-                      <button
-                        onClick={() => removeArrayItem(index, 'responsibilities')}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Achievements */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Key Achievements
-              </label>
-              <input
-                type="text"
-                value={achievementInput}
-                onChange={(e) => setAchievementInput(e.target.value)}
-                onKeyPress={(e) => handleKeyPress(e, achievementInput, setAchievementInput, 'achievements')}
-                className="input-field"
-                placeholder="Type achievement and press Enter"
-              />
-              {currentInternship.achievements.length > 0 && (
-                <div className="space-y-1 mt-2">
-                  {currentInternship.achievements.map((achievement, index) => (
-                    <div key={index} className="flex items-center justify-between bg-green-50 p-2 rounded">
-                      <span className="text-sm text-gray-700">⭐ {achievement}</span>
-                      <button
-                        onClick={() => removeArrayItem(index, 'achievements')}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Skills Gained */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Skills Gained
-              </label>
-              <input
-                type="text"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyPress={(e) => handleKeyPress(e, skillInput, setSkillInput, 'skillsGained')}
-                className="input-field"
-                placeholder="Type skill and press Enter"
-              />
-              {currentInternship.skillsGained.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {currentInternship.skillsGained.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full"
-                    >
-                      {skill}
-                      <button
-                        onClick={() => removeArrayItem(index, 'skillsGained')}
-                        className="ml-2 text-blue-600 hover:text-blue-800"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Technologies */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Technologies Used
-              </label>
-              <input
-                type="text"
-                value={techInput}
-                onChange={(e) => setTechInput(e.target.value)}
-                onKeyPress={(e) => handleKeyPress(e, techInput, setTechInput, 'technologies')}
-                className="input-field"
-                placeholder="Type technology and press Enter"
-              />
-              {currentInternship.technologies.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {currentInternship.technologies.map((tech, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center bg-primary-100 text-primary-800 text-sm px-3 py-1 rounded-full"
-                    >
-                      {tech}
-                      <button
-                        onClick={() => removeArrayItem(index, 'technologies')}
-                        className="ml-2 text-primary-600 hover:text-primary-800"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Projects */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Key Projects
-              </label>
-              <input
-                type="text"
-                value={projectInput}
-                onChange={(e) => setProjectInput(e.target.value)}
-                onKeyPress={(e) => handleKeyPress(e, projectInput, setProjectInput, 'projects')}
-                className="input-field"
-                placeholder="Type project name and press Enter"
-              />
-              {currentInternship.projects.length > 0 && (
-                <div className="space-y-1 mt-2">
-                  {currentInternship.projects.map((project, index) => (
-                    <div key={index} className="flex items-center justify-between bg-purple-50 p-2 rounded">
-                      <span className="text-sm text-gray-700">🚀 {project}</span>
-                      <button
-                        onClick={() => removeArrayItem(index, 'projects')}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Additional Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Supervisor/Manager
-                </label>
-                <input
-                  type="text"
-                  name="supervisor"
-                  value={currentInternship.supervisor}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  placeholder="e.g. John Smith, Senior Engineer"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Size
-                </label>
-                <select
-                  name="companySize"
-                  value={currentInternship.companySize}
-                  onChange={handleInputChange}
-                  className="input-field"
-                >
-                  <option value="">Select size</option>
-                  <option value="Startup (1-50)">Startup (1-50)</option>
-                  <option value="Small (51-200)">Small (51-200)</option>
-                  <option value="Medium (201-1000)">Medium (201-1000)</option>
-                  <option value="Large (1001-5000)">Large (1001-5000)</option>
-                  <option value="Enterprise (5000+)">Enterprise (5000+)</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mentorship & Learning
-              </label>
-              <textarea
-                name="mentorship"
-                value={currentInternship.mentorship}
-                onChange={handleInputChange}
-                rows={2}
-                className="input-field resize-none"
-                placeholder="Describe the mentorship you received and key learnings..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Networking & Professional Growth
-              </label>
-              <textarea
-                name="networking"
-                value={currentInternship.networking}
-                onChange={handleInputChange}
-                rows={2}
-                className="input-field resize-none"
-                placeholder="Professional connections made and growth opportunities..."
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex space-x-3">
-              <button onClick={handleAddInternship} className="btn-primary flex-1">
-                {isEditing ? 'Update Internship' : 'Add Internship'}
-              </button>
-              {isEditing && (
-                <button onClick={resetForm} className="btn-secondary">
-                  Cancel
-                </button>
-              )}
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary-50/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Professional Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-primary-600 to-highlight-500 rounded-2xl mb-6 shadow-xl">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6l-8 2M8 4v2l8 2m0-4V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0l-8 2" />
+            </svg>
           </div>
+          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary-600 to-highlight-500 bg-clip-text text-transparent mb-4">
+            Internships
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Showcase your practical experience and professional growth
+          </p>
         </div>
 
-        {/* Internships List */}
-        <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-gray-900">Added Internships</h2>
-          
-          {internshipsList.length === 0 ? (
-            <div className="card text-center py-8">
-              <div className="text-4xl mb-4">💼</div>
-              <p className="text-gray-500 mb-4">No internships added yet. Document your professional experience!</p>
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="btn-primary"
-              >
-                Browse Templates
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {internshipsList.map((internship) => (
-                <div key={internship.id} className="card">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{internship.position}</h3>
-                      <p className="text-sm text-gray-600">{internship.company}</p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditInternship(internship)}
-                        className="text-primary-600 hover:text-primary-800 text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteInternship(internship.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Delete
-                      </button>
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Form */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Internship Form */}
+            <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-8">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {isEditing ? 'Edit Internship' : 'Add Internship'}
+                </h2>
+                <p className="text-gray-600">Document your professional internship experiences.</p>
+              </div>
+
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input
+                    label="Company Name"
+                    type="text"
+                    value={currentInternship.company}
+                    onChange={(e) => handleInputChange('company', e.target.value)}
+                    placeholder="Google"
+                    required
+                    leftIcon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    }
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                    <select
+                      value={currentInternship.position}
+                      onChange={(e) => handleInputChange('position', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                      required
+                    >
+                      <option value="">Select Position</option>
+                      {internshipPositions.map(position => (
+                        <option key={position} value={position}>{position}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Input
+                    label="Department"
+                    type="text"
+                    value={currentInternship.department}
+                    onChange={(e) => handleInputChange('department', e.target.value)}
+                    placeholder="Engineering"
+                    leftIcon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    }
+                  />
+
+                  <Input
+                    label="Location"
+                    type="text"
+                    value={currentInternship.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    placeholder="San Francisco, CA"
+                    leftIcon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    }
+                  />
+
+                  <Input
+                    label="Supervisor"
+                    type="text"
+                    value={currentInternship.supervisor}
+                    onChange={(e) => handleInputChange('supervisor', e.target.value)}
+                    placeholder="John Smith"
+                    leftIcon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    }
+                  />
+                </div>
+
+                {/* Dates and Employment Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input
+                    label="Start Date"
+                    type="month"
+                    value={currentInternship.startDate}
+                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    required
+                  />
+
+                  <div>
+                    <Input
+                      label="End Date"
+                      type="month"
+                      value={currentInternship.endDate}
+                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      disabled={currentInternship.isCurrentRole}
+                    />
+                    <div className="mt-2">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={currentInternship.isCurrentRole}
+                          onChange={(e) => {
+                            handleInputChange('isCurrentRole', e.target.checked);
+                            if (e.target.checked) {
+                              handleInputChange('endDate', '');
+                            }
+                          }}
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-600">Currently working here</span>
+                      </label>
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                    <div>📍 {internship.location}</div>
-                    <div>📅 {internship.startDate} - {internship.isCurrentRole ? 'Present' : internship.endDate}</div>
-                    <div>🏢 {internship.department}</div>
-                    <div>💻 {internship.workMode}</div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Employment Type</label>
+                    <select
+                      value={currentInternship.employmentType}
+                      onChange={(e) => handleInputChange('employmentType', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                    >
+                      <option value="">Select Type</option>
+                      {employmentTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
                   </div>
 
-                  {internship.description && (
-                    <p className="text-gray-600 text-sm mb-3">{internship.description}</p>
-                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Work Mode</label>
+                    <select
+                      value={currentInternship.workMode}
+                      onChange={(e) => handleInputChange('workMode', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                    >
+                      <option value="">Select Mode</option>
+                      {workModes.map(mode => (
+                        <option key={mode} value={mode}>{mode}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                  {internship.achievements.length > 0 && (
-                    <div className="mb-3">
-                      <h4 className="text-sm font-medium text-gray-900 mb-1">Key Achievements:</h4>
-                      <ul className="text-gray-600 text-sm space-y-1">
-                        {internship.achievements.slice(0, 2).map((achievement, index) => (
-                          <li key={index} className="flex items-start">
-                            <span className="w-1 h-1 bg-green-600 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                            {achievement}
-                          </li>
-                        ))}
-                        {internship.achievements.length > 2 && (
-                          <li className="text-gray-500 text-xs">+{internship.achievements.length - 2} more</li>
-                        )}
-                      </ul>
+                  <Input
+                    label="Stipend (Optional)"
+                    type="text"
+                    value={currentInternship.stipend}
+                    onChange={(e) => handleInputChange('stipend', e.target.value)}
+                    placeholder="$2000/month"
+                    leftIcon={
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Company Size</label>
+                    <select
+                      value={currentInternship.companySize}
+                      onChange={(e) => handleInputChange('companySize', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                    >
+                      <option value="">Select Size</option>
+                      {companySizes.map(size => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                    <select
+                      value={currentInternship.industry}
+                      onChange={(e) => handleInputChange('industry', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                    >
+                      <option value="">Select Industry</option>
+                      {industries.map(industry => (
+                        <option key={industry} value={industry}>{industry}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <Textarea
+                  label="Role Description"
+                  value={currentInternship.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Provide a brief overview of your role and the team you worked with..."
+                  rows={3}
+                />
+
+                {/* Responsibilities */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Key Responsibilities</label>
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={responsibilityInput}
+                      onChange={(e) => setResponsibilityInput(e.target.value)}
+                      placeholder="Developed and maintained web applications using React..."
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      onKeyPress={(e) => e.key === 'Enter' && addResponsibility()}
+                    />
+                    <button
+                      type="button"
+                      onClick={addResponsibility}
+                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {currentInternship.responsibilities.map((responsibility, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                      >
+                        <span className="text-blue-800">{responsibility}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeResponsibility(responsibility)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Achievements */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Key Achievements</label>
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={achievementInput}
+                      onChange={(e) => setAchievementInput(e.target.value)}
+                      placeholder="Improved system performance by 30%..."
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      onKeyPress={(e) => e.key === 'Enter' && addAchievement()}
+                    />
+                    <button
+                      type="button"
+                      onClick={addAchievement}
+                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {currentInternship.achievements.map((achievement, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
+                      >
+                        <span className="text-green-800">{achievement}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeAchievement(achievement)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Skills and Technologies */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Skills Gained</label>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="text"
+                        value={skillInput}
+                        onChange={(e) => setSkillInput(e.target.value)}
+                        placeholder="Project Management, Data Analysis"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+                      />
+                      <button
+                        type="button"
+                        onClick={addSkill}
+                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                      >
+                        Add
+                      </button>
                     </div>
-                  )}
-
-                  {internship.technologies.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {internship.technologies.slice(0, 3).map((tech, index) => (
-                        <span key={index} className="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded">
-                          {tech}
+                    <div className="flex flex-wrap gap-2">
+                      {currentInternship.skillsGained.map((skill, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
+                        >
+                          {skill}
+                          <button
+                            type="button"
+                            onClick={() => removeSkill(skill)}
+                            className="ml-2 text-purple-600 hover:text-purple-800"
+                          >
+                            ×
+                          </button>
                         </span>
                       ))}
-                      {internship.technologies.length > 3 && (
-                        <span className="text-gray-500 text-xs">+{internship.technologies.length - 3}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Company Templates Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-gray-900">Company Templates</h3>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {internshipSuggestions.map((suggestion, index) => (
-                  <div key={index} className="card cursor-pointer hover:shadow-lg transition-shadow"
-                       onClick={() => handleSelectSuggestion(suggestion)}>
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-gray-900">{suggestion.company}</h4>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        suggestion.type === 'FAANG' ? 'bg-red-100 text-red-800' :
-                        suggestion.type === 'Startup' ? 'bg-green-100 text-green-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {suggestion.type}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium text-gray-700 mb-1">{suggestion.position}</p>
-                    <p className="text-xs text-gray-500 mb-3">{suggestion.description}</p>
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>📍 {suggestion.location}</span>
-                      <span>⏰ {suggestion.duration}</span>
                     </div>
                   </div>
-                ))}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Technologies Used</label>
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="text"
+                        value={techInput}
+                        onChange={(e) => setTechInput(e.target.value)}
+                        placeholder="React, Python, AWS"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        onKeyPress={(e) => e.key === 'Enter' && addTechnology()}
+                      />
+                      <button
+                        type="button"
+                        onClick={addTechnology}
+                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {currentInternship.technologies.map((tech, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                        >
+                          {tech}
+                          <button
+                            type="button"
+                            onClick={() => removeTechnology(tech)}
+                            className="ml-2 text-blue-600 hover:text-blue-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Projects */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Key Projects</label>
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={projectInput}
+                      onChange={(e) => setProjectInput(e.target.value)}
+                      placeholder="Customer analytics dashboard redesign"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      onKeyPress={(e) => e.key === 'Enter' && addProject()}
+                    />
+                    <button
+                      type="button"
+                      onClick={addProject}
+                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {currentInternship.projects.map((project, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+                      >
+                        <span className="text-yellow-800">{project}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeProject(project)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                <div className="border-t border-gray-200 pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h3>
+                  
+                  <div className="space-y-6">
+                    <Textarea
+                      label="Mentorship Experience"
+                      value={currentInternship.mentorship}
+                      onChange={(e) => handleInputChange('mentorship', e.target.value)}
+                      placeholder="Describe mentorship received or provided..."
+                      rows={2}
+                    />
+
+                    <Textarea
+                      label="Networking Opportunities"
+                      value={currentInternship.networking}
+                      onChange={(e) => handleInputChange('networking', e.target.value)}
+                      placeholder="Professional connections made, events attended..."
+                      rows={2}
+                    />
+
+                    <Textarea
+                      label="Letter of Recommendation"
+                      value={currentInternship.recommendation}
+                      onChange={(e) => handleInputChange('recommendation', e.target.value)}
+                      placeholder="Information about recommendation letters received..."
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={saveInternship}
+                    className="bg-gradient-to-r from-primary-600 to-highlight-500 hover:from-primary-700 hover:to-highlight-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
+                    {isEditing ? 'Update Internship' : 'Add Internship'}
+                  </button>
+                  
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Navigation */}
-      <div className="mt-8 flex justify-between">
-        <button className="btn-secondary" onClick={() => completeStep(7)}>
-          Skip This Step
-        </button>
-        <button onClick={handleSave} className="btn-primary">
-          Save & Continue
-        </button>
+            {/* Internships List */}
+            {internshipsList.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-8">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Internships</h2>
+                  <p className="text-gray-600">Review and manage your internship experiences.</p>
+                </div>
+
+                <div className="space-y-6">
+                  {internshipsList.map((internship) => (
+                    <div key={internship.id} className="border border-gray-200 rounded-lg p-6 hover:border-primary-300 transition-colors">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-bold text-gray-900">{internship.position}</h3>
+                            {internship.isCurrentRole && (
+                              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                Current
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-primary-600 font-medium mb-1">{internship.company}</p>
+                          <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-3">
+                            {internship.department && <span>🏢 {internship.department}</span>}
+                            {internship.location && <span>📍 {internship.location}</span>}
+                            {internship.startDate && (
+                              <span>📅 {new Date(internship.startDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - {
+                                internship.isCurrentRole ? 'Present' : 
+                                internship.endDate ? new Date(internship.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'
+                              }</span>
+                            )}
+                            {internship.workMode && <span>💻 {internship.workMode}</span>}
+                          </div>
+                          
+                          {internship.description && (
+                            <p className="text-gray-700 mb-3">{internship.description}</p>
+                          )}
+
+                          {internship.responsibilities.length > 0 && (
+                            <div className="mb-3">
+                              <h5 className="font-medium text-gray-700 mb-2">Key Responsibilities:</h5>
+                              <ul className="list-disc list-inside space-y-1">
+                                {internship.responsibilities.slice(0, 3).map((responsibility, index) => (
+                                  <li key={index} className="text-gray-700 text-sm">{responsibility}</li>
+                                ))}
+                                {internship.responsibilities.length > 3 && (
+                                  <li className="text-gray-500 text-sm">+ {internship.responsibilities.length - 3} more</li>
+                                )}
+                              </ul>
+                            </div>
+                          )}
+
+                          {internship.achievements.length > 0 && (
+                            <div className="mb-3">
+                              <h5 className="font-medium text-gray-700 mb-2">Achievements:</h5>
+                              <ul className="list-disc list-inside space-y-1">
+                                {internship.achievements.slice(0, 2).map((achievement, index) => (
+                                  <li key={index} className="text-gray-700 text-sm">{achievement}</li>
+                                ))}
+                                {internship.achievements.length > 2 && (
+                                  <li className="text-gray-500 text-sm">+ {internship.achievements.length - 2} more</li>
+                                )}
+                              </ul>
+                            </div>
+                          )}
+
+                          {(internship.technologies.length > 0 || internship.skillsGained.length > 0) && (
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {internship.technologies.slice(0, 5).map((tech, index) => (
+                                <span
+                                  key={index}
+                                  className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm"
+                                >
+                                  {tech}
+                                </span>
+                              ))}
+                              {internship.skillsGained.slice(0, 3).map((skill, index) => (
+                                <span
+                                  key={index}
+                                  className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => editInternship(internship)}
+                            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => deleteInternship(internship.id)}
+                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Save Button */}
+            <div className="flex justify-end">
+              <button 
+                onClick={handleSave} 
+                className="bg-gradient-to-r from-primary-600 to-highlight-500 hover:from-primary-700 hover:to-highlight-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+              >
+                Save & Continue
+              </button>
+            </div>
+          </div>
+
+
+        </div>
       </div>
     </div>
   );

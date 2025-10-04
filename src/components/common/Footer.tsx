@@ -1,12 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import LegalModal from './LegalModal';
+import Modal from './Modal';
 
 const Footer: React.FC = () => {
   const [legalModal, setLegalModal] = useState<{ isOpen: boolean; content: 'privacy' | 'terms' | 'cookies' }>({
     isOpen: false,
     content: 'privacy'
   });
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{id: number, text: string, sender: 'user' | 'bot', timestamp: Date}>>([
+    {
+      id: 1,
+      text: "Hello! I'm ResuMagic's AI assistant. I'm here to help you with any questions about creating professional resumes, our templates, pricing, or features. How can I assist you today?",
+      sender: 'bot',
+      timestamp: new Date()
+    }
+  ]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages are added
+  useEffect(() => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTo({
+        top: chatMessagesRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [chatMessages]);
 
   // Function to scroll to top when navigating
   const scrollToTop = () => {
@@ -18,6 +40,88 @@ const Footer: React.FC = () => {
     setLegalModal({ isOpen: true, content });
   };
 
+  // Chatbot responses based on ResuMagic data
+  const getBotResponse = (userMessage: string): string => {
+    const message = userMessage.toLowerCase();
+    
+    if (message.includes('template') || message.includes('design')) {
+      return "We offer a variety of professional resume templates! Our free plan includes basic templates, while premium templates (starting at $9.99) feature advanced designs for executives, tech professionals, and creative fields. All templates are ATS-optimized to help you get past applicant tracking systems.";
+    }
+    
+    if (message.includes('price') || message.includes('cost') || message.includes('pricing') || message.includes('premium')) {
+      return "Our pricing is flexible to meet your needs: Free plan includes basic templates and PDF downloads. Premium templates range from $9.99-$14.99. Support features (courses, internships, hackathons integration) are $19.99-$24.99. Our complete bundle with all features is just $49.99 (26% savings)!";
+    }
+    
+    if (message.includes('ats') || message.includes('applicant tracking') || message.includes('system')) {
+      return "Yes! All our resume templates are ATS-friendly. They use proper formatting, standard fonts, clear section headers, and proper keyword placement that Applicant Tracking Systems can easily parse. This gives you the best chance of getting your resume seen by human recruiters.";
+    }
+    
+    if (message.includes('download') || message.includes('export') || message.includes('pdf')) {
+      return "You can download your resume in multiple formats: PDF (recommended for applications), Word document, and plain text. Free users get PDF downloads, while premium users get all formats plus high-resolution options for printing.";
+    }
+    
+    if (message.includes('help') || message.includes('support') || message.includes('contact')) {
+      return "I'm here to help! You can also reach our support team at support@resumagic.com (response within 24 hours), or check our comprehensive FAQ and Help Documentation. We're available during business hours: 9 AM - 6 PM EST.";
+    }
+    
+    if (message.includes('create') || message.includes('build') || message.includes('make') || message.includes('start')) {
+      return "Creating your resume is easy! Click 'Start Building Free' on our homepage, choose a template, and follow our guided wizard. You can complete a professional resume in under 5 minutes. The process includes adding personal info, work experience, education, skills, and customizing the design.";
+    }
+    
+    if (message.includes('edit') || message.includes('change') || message.includes('update') || message.includes('modify')) {
+      return "Absolutely! You can edit your resume anytime after creating it. Changes are saved automatically as you work. You can update content, switch templates, change colors, add new sections, and download updated versions whenever needed.";
+    }
+    
+    if (message.includes('secure') || message.includes('privacy') || message.includes('data') || message.includes('safe')) {
+      return "Your privacy and data security are our top priorities. All data is encrypted and stored securely. We never share your personal information with third parties. You maintain full control over your data and can delete your account and information at any time.";
+    }
+    
+    if (message.includes('integration') || message.includes('course') || message.includes('internship') || message.includes('hackathon')) {
+      return "Our integration features connect you with partner platforms! The Courses integration ($19.99) links with Coursera, Udemy, and LinkedIn Learning. Internships integration ($24.99) connects with LinkedIn and Indeed. Hackathons integration ($22.99) helps showcase your coding achievements. All automatically sync to your resume!";
+    }
+    
+    if (message.includes('payment') || message.includes('pay') || message.includes('card') || message.includes('paypal')) {
+      return "We accept all major payment methods for your convenience: Credit cards (Visa, MasterCard, American Express), PayPal, Stripe, PayStack, RazorPay, and PayTM. All transactions are secure and encrypted. You'll receive an instant receipt via email.";
+    }
+    
+    // Default response for unmatched queries
+    return "I'd be happy to help you with that! ResuMagic offers professional resume building tools, ATS-optimized templates, and career integration features. Could you tell me more specifically what you'd like to know about? I can help with templates, pricing, features, account questions, or technical support.";
+  };
+
+  // Handle sending a chat message
+  const handleSendMessage = () => {
+    if (!currentMessage.trim()) return;
+    
+    const userMessage = {
+      id: chatMessages.length + 1,
+      text: currentMessage,
+      sender: 'user' as const,
+      timestamp: new Date()
+    };
+    
+    setChatMessages(prev => [...prev, userMessage]);
+    setCurrentMessage('');
+    
+    // Simulate bot response delay
+    setTimeout(() => {
+      const botResponse = {
+        id: chatMessages.length + 2,
+        text: getBotResponse(currentMessage),
+        sender: 'bot' as const,
+        timestamp: new Date()
+      };
+      setChatMessages(prev => [...prev, botResponse]);
+    }, 1000);
+  };
+
+  // Handle Enter key press in chat input
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   return (
     <footer className="bg-primary-600 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -26,9 +130,11 @@ const Footer: React.FC = () => {
           {/* About ResuMagic Section */}
           <div>
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-2">
-                <span className="text-white font-bold text-sm">R</span>
-              </div>
+              <img 
+                src="/Logo2.png" 
+                alt="ResuMagic Logo" 
+                className="w-8 h-8 mr-2 object-contain"
+              />
               <span className="text-xl font-bold">ResuMagic</span>
             </div>
             <h3 className="text-lg font-semibold text-white mb-4">About ResuMagic</h3>
@@ -94,8 +200,14 @@ const Footer: React.FC = () => {
                 </span>
               </li>
               <li>
-                <button className="text-primary-200 hover:text-white text-sm transition-colors text-left">
-                  Live Chat Support
+                <button 
+                  onClick={() => setShowChatModal(true)}
+                  className="text-primary-200 hover:text-white text-sm transition-colors text-left flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <span>Live Chat Support</span>
                 </button>
               </li>
             </ul>
@@ -171,7 +283,7 @@ const Footer: React.FC = () => {
               <h3 className="text-lg font-semibold text-white mb-4">Payment Methods</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                 {/* PayPal */}
-                <div className="bg-white/90 hover:bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all group">
+                <div className="bg-white/90 hover:bg-white border border-gray-200 rounded-lg p-3 text-center shadow-soft hover:shadow-card transition-all group">
                   <div className="w-12 h-8 mx-auto mb-2 flex items-center justify-center">
                     <img 
                       src="/paypal.png" 
@@ -183,7 +295,7 @@ const Footer: React.FC = () => {
                 </div>
                 
                 {/* Stripe */}
-                <div className="bg-white/90 hover:bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all group">
+                <div className="bg-white/90 hover:bg-white border border-gray-200 rounded-lg p-3 text-center shadow-soft hover:shadow-card transition-all group">
                   <div className="w-12 h-8 mx-auto mb-2 flex items-center justify-center">
                     <img 
                       src="/stripe.png" 
@@ -195,7 +307,7 @@ const Footer: React.FC = () => {
                 </div>
                 
                 {/* PayStack */}
-                <div className="bg-white/90 hover:bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all group">
+                <div className="bg-white/90 hover:bg-white border border-gray-200 rounded-lg p-3 text-center shadow-soft hover:shadow-card transition-all group">
                   <div className="w-12 h-8 mx-auto mb-2 flex items-center justify-center">
                     <img 
                       src="/PayStack.webp" 
@@ -207,7 +319,7 @@ const Footer: React.FC = () => {
                 </div>
                 
                 {/* RazorPay */}
-                <div className="bg-white/90 hover:bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all group">
+                <div className="bg-white/90 hover:bg-white border border-gray-200 rounded-lg p-3 text-center shadow-soft hover:shadow-card transition-all group">
                   <div className="w-12 h-8 mx-auto mb-2 flex items-center justify-center">
                     <img 
                       src="/Razorpay.png" 
@@ -219,7 +331,7 @@ const Footer: React.FC = () => {
                 </div>
                 
                 {/* PayTM */}
-                <div className="bg-white/90 hover:bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all group">
+                <div className="bg-white/90 hover:bg-white border border-gray-200 rounded-lg p-3 text-center shadow-soft hover:shadow-card transition-all group">
                   <div className="w-12 h-8 mx-auto mb-2 flex items-center justify-center">
                     <img 
                       src="/Paytm.png" 
@@ -252,6 +364,102 @@ const Footer: React.FC = () => {
         }
         content={legalModal.content}
       />
+
+      {/* Chat Support Modal */}
+      {showChatModal && (
+        <Modal isOpen={showChatModal} onClose={() => setShowChatModal(false)} title="Live Chat Support">
+          <div className="flex flex-col h-96">
+            {/* Chat Header */}
+            <div className="bg-gradient-to-r from-primary-600 to-highlight-600 text-white p-4 rounded-t-lg">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.847a4.5 4.5 0 003.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 00-3.09 3.09z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold">ResuMagic AI Assistant</h3>
+                  <p className="text-xs text-white/80">Online • Powered by AI</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Chat Messages */}
+            <div ref={chatMessagesRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+              {chatMessages.map((message) => (
+                <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                    message.sender === 'user' 
+                      ? 'bg-primary-600 text-white' 
+                      : 'bg-white border border-accent-200 text-gray-800 shadow-soft'
+                  }`}>
+                    {message.sender === 'bot' && (
+                      <div className="flex items-center space-x-2 mb-1">
+                        <div className="w-5 h-5 bg-primary-100 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.847a4.5 4.5 0 003.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 00-3.09 3.09z" />
+                          </svg>
+                        </div>
+                        <span className="text-xs font-medium text-primary-600">AI Assistant</span>
+                      </div>
+                    )}
+                    <p className="text-sm leading-relaxed">{message.text}</p>
+                    <p className={`text-xs mt-1 ${message.sender === 'user' ? 'text-white/70' : 'text-gray-500'}`}>
+                      {message.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Chat Input */}
+            <div className="border-t border-accent-200 p-4 bg-white">
+              <div className="flex space-x-3">
+                <input
+                  type="text"
+                  value={currentMessage}
+                  onChange={(e) => setCurrentMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your question about ResuMagic..."
+                  className="flex-1 px-4 py-2 border border-accent-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!currentMessage.trim()}
+                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  <span className="hidden sm:inline">Send</span>
+                </button>
+              </div>
+              
+              {/* Quick Actions */}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button 
+                  onClick={() => setCurrentMessage("How do I create a resume?")}
+                  className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-full transition-colors"
+                >
+                  How to create resume?
+                </button>
+                <button 
+                  onClick={() => setCurrentMessage("What are your pricing plans?")}
+                  className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-full transition-colors"
+                >
+                  Pricing plans
+                </button>
+                <button 
+                  onClick={() => setCurrentMessage("Are templates ATS-friendly?")}
+                  className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-full transition-colors"
+                >
+                  ATS templates
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
     </footer>
   );
 };

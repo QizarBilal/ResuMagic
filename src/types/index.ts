@@ -21,8 +21,10 @@ export interface Education {
 }
 
 export interface Skill {
+  id: string;
+  name: string;
+  level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
   category: string;
-  skills: string[];
 }
 
 export interface Project {
@@ -35,6 +37,12 @@ export interface Project {
   githubUrl?: string;
   liveUrl?: string;
   highlights: string[];
+  role?: string;
+  teamSize?: number;
+  impact?: string;
+  achievements?: string[];
+  url?: string;
+  github?: string;
 }
 
 export interface Certification {
@@ -133,7 +141,7 @@ export interface Achievement {
   description: string;
   date: string;
   organization?: string;
-  category: 'academic' | 'professional' | 'personal' | 'competition' | 'volunteer';
+  category: 'academic' | 'professional' | 'personal' | 'competition' | 'volunteer' | 'leadership' | 'innovation' | 'community' | 'technical' | 'publication' | 'awards';
   impact?: string;
   recognition?: string;
 }
@@ -216,30 +224,65 @@ export interface Toast {
   duration?: number;
 }
 
-export interface Course {
+// Pricing System Types
+export interface PricingPlan {
   id: string;
-  title: string;
+  name: string;
   description: string;
-  category: CourseCategory;
-  duration: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
-  rating: number;
-  students: number;
   price: number;
   originalPrice?: number;
-  instructor: string;
-  image: string;
-  skills: string[];
-  isPremium?: boolean;
-  isNew?: boolean;
-  isBestseller?: boolean;
+  period: 'one-time' | 'monthly' | 'yearly';
+  category: 'free' | 'template' | 'support' | 'bundle';
+  features: string[];
+  buttonText: string;
+  popular?: boolean;
+  discount?: number;
 }
 
-export type CourseCategory = 
-  | 'Programming'
-  | 'Design'
-  | 'Marketing'
-  | 'Business'
-  | 'Data Science'
-  | 'Career Development'
-  | 'Soft Skills';
+export interface PremiumTemplate {
+  id: string;
+  name: string;
+  thumbnail: string;
+  category: 'modern' | 'classic' | 'creative' | 'minimal' | 'executive' | 'tech';
+  price: number;
+  originalPrice?: number;
+  description: string;
+  features: string[];
+  isPremium: boolean;
+  isPopular?: boolean;
+  previewImages?: string[];
+}
+
+export interface SupportFeature {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  price: number;
+  originalPrice?: number;
+  category: 'courses' | 'internships' | 'hackathons';
+  redirectUrl: string;
+  benefits: string[];
+  integrationFeatures: string[];
+  isPopular?: boolean;
+}
+
+export interface BundlePackage {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice: number;
+  discount: number;
+  features: SupportFeature[];
+  additionalBenefits: string[];
+  isRecommended?: boolean;
+}
+
+export interface PaymentItem {
+  id: string;
+  type: 'template' | 'support' | 'bundle';
+  name: string;
+  price: number;
+  description?: string;
+}

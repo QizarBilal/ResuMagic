@@ -18,11 +18,12 @@ const Header: React.FC = () => {
     { path: '/templates', label: 'Templates' },
     { path: '/resume-builder', label: 'Resume Builder' },
     { path: '/features', label: 'Features' },
+    { path: '/pricing', label: 'Pricing' },
     { path: '/contact', label: 'Contact' }
   ];
 
   return (
-    <header className="bg-white border-b border-accent-200 sticky top-0 z-50 shadow-sm">
+    <header className="bg-white border-b border-accent-200 sticky top-0 z-50 shadow-soft">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 sm:h-20">
           <div className="flex items-center">
@@ -92,7 +93,7 @@ const Header: React.FC = () => {
         </div>
 
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-accent-200 bg-white shadow-lg">
+          <div className="md:hidden border-t border-accent-200 bg-white shadow-card">
             <div className="px-4 pt-4 pb-6 space-y-1 max-h-screen overflow-y-auto">
               {navLinks.map((link) => (
                 <Link

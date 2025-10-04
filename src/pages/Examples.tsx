@@ -45,7 +45,7 @@ const Examples: React.FC = () => {
       level: "Mid Level",
       description: "CPA with expertise in financial modeling, budgeting, and strategic planning.",
       highlights: ["Number-driven results", "Certification emphasis", "Conservative design", "Detail-oriented"],
-      color: "bg-navy-500"
+      color: "bg-primary-500"
     },
     {
       id: 6,
@@ -82,11 +82,11 @@ const Examples: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-navy-900 text-white py-16">
+      <div className="bg-gradient-to-br from-primary-600 to-primary-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Resume Examples & Inspiration</h1>
-            <p className="text-xl text-navy-200 max-w-3xl mx-auto">
+            <p className="text-xl text-primary-100 max-w-3xl mx-auto">
               Explore professional resume examples across different industries and experience levels to inspire your own resume creation.
             </p>
           </div>
@@ -99,7 +99,7 @@ const Examples: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Industry</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500">
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
                 {industries.map((industry) => (
                   <option key={industry} value={industry}>{industry}</option>
                 ))}
@@ -107,7 +107,7 @@ const Examples: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Experience Level</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500">
+              <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
                 {levels.map((level) => (
                   <option key={level} value={level}>{level}</option>
                 ))}
@@ -122,12 +122,12 @@ const Examples: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {resumeExamples.map((example) => (
-              <div key={example.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div key={example.id} className="bg-white rounded-lg shadow-card border border-accent-200 overflow-hidden hover:shadow-xl transition-shadow">
                 {/* Resume Preview */}
                 <div className="h-64 bg-gray-100 relative overflow-hidden">
                   <div className={`absolute inset-0 ${example.color} opacity-10`}></div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-white p-4 rounded-lg shadow-sm w-40 h-52 overflow-hidden">
+                    <div className="bg-white p-4 rounded-lg shadow-soft border border-accent-200 w-40 h-52 overflow-hidden">
                       <div className="space-y-2">
                         <div className="h-3 bg-gray-800 rounded w-3/4"></div>
                         <div className="h-2 bg-gray-400 rounded w-1/2"></div>
@@ -152,7 +152,7 @@ const Examples: React.FC = () => {
                 {/* Card Content */}
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="bg-navy-100 text-navy-800 px-2 py-1 rounded text-xs font-medium">
+                    <span className="bg-primary-100 text-primary-800 px-2 py-1 rounded text-xs font-medium">
                       {example.industry}
                     </span>
                     <span className="text-gray-500 text-xs">{example.level}</span>
@@ -178,10 +178,10 @@ const Examples: React.FC = () => {
                   </div>
 
                   <div className="flex space-x-2">
-                    <button className="flex-1 bg-navy-800 text-white px-3 py-2 rounded text-sm hover:bg-navy-700 transition-colors">
+                    <button className="flex-1 bg-primary-600 text-white px-3 py-2 rounded text-sm hover:bg-primary-700 transition-colors">
                       Preview
                     </button>
-                    <button className="flex-1 border border-navy-800 text-navy-800 px-3 py-2 rounded text-sm hover:bg-navy-50 transition-colors">
+                    <button className="flex-1 border border-primary-600 text-primary-600 px-3 py-2 rounded text-sm hover:bg-primary-50 transition-colors">
                       Use Template
                     </button>
                   </div>
@@ -198,9 +198,9 @@ const Examples: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-800 text-center mb-8">Resume Writing Tips</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center p-6 bg-white rounded-lg shadow-soft border border-accent-200">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -210,9 +210,9 @@ const Examples: React.FC = () => {
               </p>
             </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center p-6 bg-white rounded-lg shadow-soft border border-accent-200">
+              <div className="w-16 h-16 bg-highlight-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-highlight-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
@@ -222,9 +222,9 @@ const Examples: React.FC = () => {
               </p>
             </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center p-6 bg-white rounded-lg shadow-soft border border-accent-200">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
@@ -238,22 +238,24 @@ const Examples: React.FC = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-navy-900 text-white py-12">
+      <section className="py-16 bg-white border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Ready to Create Your Own Professional Resume?</h2>
-          <p className="text-navy-200 mb-6">
-            Use our templates and examples as inspiration to build a resume that stands out from the competition.
-          </p>
-          <div className="space-x-4">
-            <button className="bg-white text-navy-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-              Start Building Now
-            </button>
-            <button className="border border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-navy-900 transition-colors">
-              Browse Templates
-            </button>
+          <div className="bg-gradient-to-r from-highlight-500 to-primary-600 rounded-3xl p-12 text-white">
+            <h2 className="text-3xl font-bold mb-6 text-white">Ready to Create Your Own Professional Resume?</h2>
+            <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">
+              Use our templates and examples as inspiration to build a resume that stands out from the competition.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button className="bg-white text-primary-600 px-8 py-4 font-semibold hover:bg-gray-100 transition-colors duration-200 rounded-lg shadow-lg">
+                Start Building Now
+              </button>
+              <button className="bg-white/20 backdrop-blur-sm border border-white/30 text-white px-8 py-4 font-semibold hover:bg-white/30 transition-colors duration-200 rounded-lg">
+                Browse Templates
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

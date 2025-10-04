@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useResume } from '../../contexts/ResumeContext';
 import { Template } from '../resume/TemplateSelector';
 import Button from '../ui/Button';
@@ -8,6 +9,7 @@ interface ExportOptionsProps {
 }
 
 const ExportOptions: React.FC<ExportOptionsProps> = ({ template }) => {
+  const navigate = useNavigate();
   const { resumeData, premium } = useResume();
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<'pdf' | 'docx' | 'txt'>('pdf');
@@ -35,6 +37,18 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ template }) => {
       premium: false
     }
   ];
+
+  // Handler to navigate to pricing page's best value section
+  const handleUpgradeToPremium = () => {
+    navigate('/pricing#best-value');
+    // Scroll to best value section after navigation
+    setTimeout(() => {
+      const bestValueElement = document.getElementById('best-value');
+      if (bestValueElement) {
+        bestValueElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
 
   const handleExport = async (format: 'pdf' | 'docx' | 'txt') => {
     if (format !== 'pdf' && !premium) {
@@ -232,7 +246,10 @@ ${resumeData.certifications?.length > 0 ? `CERTIFICATIONS\n${resumeData.certific
           <p className="text-gray-600 mb-4">
             Get access to Word documents, custom formatting, and multiple export versions.
           </p>
-          <Button className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2">
+          <Button 
+            onClick={handleUpgradeToPremium}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2"
+          >
             Upgrade to Premium
           </Button>
         </div>

@@ -56,13 +56,11 @@ const LivePreview: React.FC<LivePreviewProps> = ({ template, showPlaceholder = f
           </h2>
           <div className="flex flex-wrap gap-2">
             {resumeData.skills?.length > 0 
-              ? resumeData.skills.flatMap((skillGroup, groupIndex) => 
-                  skillGroup.skills.map((skill, skillIndex) => (
-                    <span key={`${groupIndex}-${skillIndex}`} className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm">
-                      {skill}
+              ? resumeData.skills.map((skill, index) => (
+                    <span key={index} className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm">
+                      {skill.name}
                     </span>
                   ))
-                )
               : showPlaceholder && (
                   <>
                     <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm">JavaScript</span>
