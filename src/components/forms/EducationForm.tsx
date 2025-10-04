@@ -1,146 +1,82 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
-import { Education } from '../../types';
+import { Skill } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import Input from '../ui/Input';
 
+
 const EducationForm: React.FC = () => {
-  const { resumeData, updateEducation, addToast, completeStep, setCurrentStep, currentStep } = useResume();
-  
-  const [educationList, setEducationList] = useState<Education[]>(resumeData.education);
-  const [currentEducation, setCurrentEducation] = useState<Education>({
-    id: '',
-    institution: '',
-    degree: '',
-    field: '',
-    startDate: '',
-    endDate: '',
-    gpa: '',
-    relevant_coursework: []
-  });
-  
-  const [isEditing, setIsEditing] = useState(false);
-  const [coursework, setCoursework] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { resumeData, updateSkills, addToast, completeStep, setCurrentStep, currentStep } = useResume();
+  const [skillsList, setSkillsList] = useState<Skill[]>(resumeData.skills);
+  const [newSkill, setNewSkill] = useState('');
+  const [newSkillLevel, setNewSkillLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced' | 'Expert'>('Intermediate');
+  const [selectedCategory, setSelectedCategory] = useState('Technical');
 
   useEffect(() => {
-    setEducationList(resumeData.education);
-  }, [resumeData.education]);
+    setSkillsList(resumeData.skills);
+  }, [resumeData.skills]);
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+  const skillCategories = [
+    'Technical', 'Programming Languages', 'Frameworks & Libraries', 'Tools & Software',
+    'Languages', 'Soft Skills', 'Industry Knowledge', 'Certifications'
+  ];
 
-    if (!currentEducation.institution.trim()) {
-      newErrors.institution = 'Institution name is required';
-    }
-
-    if (!currentEducation.degree.trim()) {
-      newErrors.degree = 'Degree is required';
-    }
-
-    if (!currentEducation.field.trim()) {
-      newErrors.field = 'Field of study is required';
-    }
-
-    if (!currentEducation.startDate) {
-      newErrors.startDate = 'Start date is required';
-    }
-
-    if (!currentEducation.endDate) {
-      newErrors.endDate = 'End date is required';
-    }
-
-    if (currentEducation.startDate && currentEducation.endDate && 
-        new Date(currentEducation.startDate) >= new Date(currentEducation.endDate)) {
-      newErrors.endDate = 'End date must be after start date';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const skillSuggestions: Record<string, string[]> = {
+    'Technical': ['JavaScript', 'Python', 'Java', 'React', 'Node.js', 'SQL', 'Git', 'AWS', 'Docker', 'Kubernetes'],
+    'Programming Languages': ['JavaScript', 'Python', 'Java', 'C++', 'TypeScript', 'Go', 'Rust', 'PHP', 'Swift', 'Kotlin'],
+    'Frameworks & Libraries': ['React', 'Angular', 'Vue.js', 'Express.js', 'Django', 'Flask', 'Spring Boot', 'Laravel', 'Rails'],
+    'Tools & Software': ['Git', 'Docker', 'Kubernetes', 'Jenkins', 'JIRA', 'Figma', 'Adobe Creative Suite', 'Slack', 'Trello'],
+    'Languages': ['English', 'Spanish', 'French', 'German', 'Mandarin', 'Japanese', 'Korean', 'Portuguese', 'Italian'],
+    'Soft Skills': ['Leadership', 'Communication', 'Teamwork', 'Problem Solving', 'Time Management', 'Critical Thinking'],
+    'Industry Knowledge': ['Digital Marketing', 'Data Analysis', 'Project Management', 'Agile/Scrum', 'UX/UI Design'],
+    'Certifications': ['AWS Certified', 'Google Analytics', 'PMP', 'Scrum Master', 'Microsoft Certified', 'Salesforce']
   };
 
-  const resetForm = () => {
-    setCurrentEducation({
-      id: '',
-      institution: '',
-      degree: '',
-      field: '',
-      startDate: '',
-      endDate: '',
-      gpa: '',
-      relevant_coursework: []
-    });
-    setIsEditing(false);
-    setErrors({});
-  };
+  const handleAddSkill = () => {
+    if (newSkill.trim()) {
+      const newSkillObj: Skill = {
+        id: uuidv4(),
+        name: newSkill.trim(),
+        level: newSkillLevel,
+        category: selectedCategory
+      };
 
-  const handleInputChange = (field: string, value: string) => {
-    setCurrentEducation(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setSkillsList(prev => [...prev, newSkillObj]);
+      setNewSkill('');
+      addToast({
+        type: 'success',
+        message: 'Skill added successfully!',
+      });
     }
   };
 
-  const addCoursework = () => {
-    if (coursework.trim()) {
-      setCurrentEducation(prev => ({
-        ...prev,
-        relevant_coursework: [...(prev.relevant_coursework || []), coursework.trim()]
-      }));
-      setCoursework('');
-    }
-  };
-
-  const removeCoursework = (index: number) => {
-    setCurrentEducation(prev => ({
-      ...prev,
-      relevant_coursework: (prev.relevant_coursework || []).filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleAddEducation = () => {
-    if (validateForm()) {
-      const newEducation = { ...currentEducation, id: currentEducation.id || uuidv4() };
-      
-      if (isEditing) {
-        setEducationList(prev => prev.map(edu => edu.id === newEducation.id ? newEducation : edu));
-        addToast({
-          type: 'success',
-          message: 'Education updated successfully!',
-        });
-      } else {
-        setEducationList(prev => [...prev, newEducation]);
-        addToast({
-          type: 'success',
-          message: 'Education added successfully!',
-        });
-      }
-      resetForm();
-    }
-  };
-
-  const handleEditEducation = (education: Education) => {
-    setCurrentEducation(education);
-    setIsEditing(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleRemoveEducation = (id: string) => {
-    setEducationList(prev => prev.filter(edu => edu.id !== id));
+  const handleRemoveSkill = (id: string) => {
+    setSkillsList(prev => prev.filter(skill => skill.id !== id));
     addToast({
       type: 'success',
-      message: 'Education removed successfully',
+      message: 'Skill removed successfully!',
     });
+  };
+
+  const handleUpdateSkillLevel = (id: string, level: string) => {
+    setSkillsList(prev => prev.map(skill => 
+      skill.id === id ? { ...skill, level: level as any } : skill
+    ));
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setNewSkill(suggestion);
   };
 
   const handleSave = () => {
-    updateEducation(educationList);
-    completeStep(2);
+    updateSkills(skillsList);
+    completeStep(3);
     addToast({
       type: 'success',
-      message: 'Education saved successfully!',
+      message: 'Skills saved successfully!',
     });
     
+    // Navigate to next step and scroll to top
     const nextStep = currentStep + 1;
     setCurrentStep(nextStep);
     setTimeout(() => {
@@ -148,326 +84,178 @@ const EducationForm: React.FC = () => {
     }, 100);
   };
 
-  const degreeOptions = [
-    { value: '', label: 'Select Degree' },
-    { value: 'High School Diploma', label: 'High School Diploma' },
-    { value: 'Associate Degree', label: 'Associate Degree' },
-    { value: "Bachelor's Degree", label: "Bachelor's Degree" },
-    { value: "Master's Degree", label: "Master's Degree" },
-    { value: 'MBA', label: 'MBA (Master of Business Administration)' },
-    { value: 'PhD', label: 'PhD (Doctor of Philosophy)' },
-    { value: 'MD', label: 'MD (Doctor of Medicine)' },
-    { value: 'JD', label: 'JD (Juris Doctor)' },
-    { value: 'Certificate', label: 'Certificate Program' },
-    { value: 'Professional Certification', label: 'Professional Certification' }
-  ];
+
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'Beginner': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Intermediate': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Advanced': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Expert': return 'bg-purple-100 text-purple-800 border-purple-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const groupedSkills = skillsList.reduce((acc, skill) => {
+    if (!acc[skill.category]) {
+      acc[skill.category] = [];
+    }
+    acc[skill.category].push(skill);
+    return acc;
+  }, {} as Record<string, Skill[]>);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
+      {/* Compact Header */}
       <div className="text-center mb-6">
         <div className="flex items-center justify-center space-x-3 mb-3">
           <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-highlight-500 rounded-lg flex items-center justify-center shadow-md">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Education</h1>
-            <p className="text-sm text-gray-600">Build your academic foundation</p>
+            <h1 className="text-xl font-bold text-gray-900">Skills & Expertise</h1>
+            <p className="text-sm text-gray-600">Technical abilities and professional competencies</p>
           </div>
         </div>
       </div>
-
-      {/* Add/Edit Education Form */}
-      <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-primary-50 to-highlight-50 px-6 py-4 border-b border-primary-100">
-          <div className="flex items-center space-x-3">
-            <div className="w-6 h-6 bg-gradient-to-r from-primary-500 to-highlight-500 rounded-lg flex items-center justify-center">
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">
-                {isEditing ? 'Edit Education' : 'Add Education'}
-              </h2>
-              <p className="text-sm text-gray-600">Share your academic achievements and qualifications</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-6">
-            {/* Institution and Degree Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Input
-                label="Institution Name"
-                type="text"
-                value={currentEducation.institution}
-                onChange={(e) => handleInputChange('institution', e.target.value)}
-                placeholder="University of California, Berkeley"
-                required
-                error={errors.institution}
-              />
-
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-800">
-                  Degree <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={currentEducation.degree}
-                  onChange={(e) => handleInputChange('degree', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {degreeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.degree && (
-                  <p className="text-red-500 text-sm">{errors.degree}</p>
-                )}
+          {/* Main Form */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Add Skills Card */}
+            <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-8">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Add Skills</h2>
+                <p className="text-gray-600">Build your skills profile with relevant technical and soft skills.</p>
               </div>
-            </div>
 
-            {/* Field of Study and GPA Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Input
-                label="Field of Study"
-                type="text"
-                value={currentEducation.field}
-                onChange={(e) => handleInputChange('field', e.target.value)}
-                placeholder="Computer Science"
-                required
-                error={errors.field}
-              />
-
-              <Input
-                label="GPA (Optional)"
-                type="text"
-                value={currentEducation.gpa || ''}
-                onChange={(e) => handleInputChange('gpa', e.target.value)}
-                placeholder="3.8 / 4.0"
-              />
-            </div>
-
-            {/* Date Range */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Input
-                label="Start Date"
-                type="month"
-                value={currentEducation.startDate}
-                onChange={(e) => handleInputChange('startDate', e.target.value)}
-                required
-                error={errors.startDate}
-              />
-
-              <Input
-                label="End Date"
-                type="month"
-                value={currentEducation.endDate}
-                onChange={(e) => handleInputChange('endDate', e.target.value)}
-                required
-                error={errors.endDate}
-              />
-            </div>
-
-            {/* Relevant Coursework Section */}
-            <div className="space-y-4">
-              <label className="block text-sm font-semibold text-gray-800">
-                Relevant Coursework
-              </label>
-              <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <Input
-                      type="text"
-                      value={coursework}
-                      onChange={(e) => setCoursework(e.target.value)}
-                      placeholder="e.g., Data Structures and Algorithms"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addCoursework();
-                        }
-                      }}
-                    />
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      {skillCategories.map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
                   </div>
+
+                  <Input
+                    label="Skill Name"
+                    type="text"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    placeholder="JavaScript"
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Proficiency Level</label>
+                    <select
+                      value={newSkillLevel}
+                      onChange={(e) => setNewSkillLevel(e.target.value as any)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                      <option value="Expert">Expert</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
                   <button
                     type="button"
-                    onClick={addCoursework}
-                    disabled={!coursework.trim()}
-                    className="px-4 py-2 bg-primary-500 text-white font-medium rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    onClick={handleAddSkill}
+                    className="bg-gradient-to-r from-primary-600 to-highlight-500 hover:from-primary-700 hover:to-highlight-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    <span>Add</span>
+                    Add Skill
                   </button>
                 </div>
-                
-                {currentEducation.relevant_coursework && currentEducation.relevant_coursework.length > 0 && (
-                  <div className="mt-4 space-y-3">
-                    <p className="text-sm font-medium text-gray-700">Added Courses:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {currentEducation.relevant_coursework.map((course, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-primary-200 text-primary-800 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200"
-                        >
-                          {course}
-                          <button
-                            type="button"
-                            onClick={() => removeCoursework(index)}
-                            className="text-red-500 hover:text-red-700 transition-colors duration-200 ml-1"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <button
-                type="button"
-                onClick={handleAddEducation}
-                className="flex-1 bg-gradient-to-r from-primary-600 to-highlight-600 hover:from-primary-700 hover:to-highlight-700 text-white font-semibold py-3 px-6 rounded-lg shadow-soft hover:shadow-card transition-all duration-200 flex items-center justify-center space-x-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{isEditing ? 'Update Education' : 'Add Education'}</span>
-              </button>
-              
-              {isEditing && (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg shadow-soft hover:shadow-card transition-all duration-200 flex items-center justify-center space-x-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  <span>Cancel</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-      {/* Education List */}
-      {educationList.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-primary-50 to-highlight-50 px-6 py-4 border-b border-primary-100">
-            <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 bg-gradient-to-r from-primary-500 to-highlight-500 rounded-lg flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Your Education</h3>
-                <p className="text-sm text-gray-600">
-                  {educationList.length} {educationList.length === 1 ? 'entry' : 'entries'} added
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-6 space-y-4">
-            {educationList.map((education, index) => (
-              <div key={education.id} className="group bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-primary-200 hover:shadow-md transition-all duration-200">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-1">
-                      {education.degree} {education.field && `in ${education.field}`}
-                    </h4>
-                    <p className="text-primary-600 font-medium mb-2">{education.institution}</p>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                      <span className="flex items-center space-x-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span>{new Date(education.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })} - {new Date(education.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}</span>
-                      </span>
-                      {education.gpa && (
-                        <span className="flex items-center space-x-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                          </svg>
-                          <span>GPA: {education.gpa}</span>
-                        </span>
-                      )}
-                    </div>
-                    
-                    {education.relevant_coursework && education.relevant_coursework.length > 0 && (
-                      <div className="mt-3 border-t border-gray-200 pt-3">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Relevant Coursework:</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {education.relevant_coursework.map((course, courseIndex) => (
-                            <span
-                              key={courseIndex}
-                              className="px-2.5 py-1 bg-primary-100 text-primary-800 rounded-md text-xs font-medium"
-                            >
-                              {course}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleEditEducation(education)}
-                      className="p-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
-                      title="Edit Education"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleRemoveEducation(education.id)}
-                      className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-                      title="Remove Education"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                    </div>
+                {/* Skill Suggestions */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Suggested Skills for {selectedCategory}:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {skillSuggestions[selectedCategory]?.slice(0, 8).map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="px-3 py-1 text-sm bg-primary-50 text-primary-700 border border-primary-200 rounded-full hover:bg-primary-100 transition-colors"
+                      >
+                        + {suggestion}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ))}
+              </div>
+            </div>
+
+            {/* Skills Display */}
+            {Object.keys(groupedSkills).length > 0 && (
+              <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-8">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Skills</h2>
+                  <p className="text-gray-600">Review and manage your skill set.</p>
+                </div>
+
+                <div className="space-y-8">
+                  {Object.entries(groupedSkills).map(([category, skills]) => (
+                    <div key={category}>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                        {category} ({skills.length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {skills.map((skill) => (
+                          <div
+                            key={skill.id}
+                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-primary-300 transition-colors group"
+                          >
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{skill.name}</h4>
+                              <select
+                                value={skill.level}
+                                onChange={(e) => handleUpdateSkillLevel(skill.id, e.target.value)}
+                                className={`mt-1 text-xs px-2 py-1 rounded-full border font-medium ${getLevelColor(skill.level)}`}
+                              >
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                                <option value="Expert">Expert</option>
+                              </select>
+                            </div>
+                            <button
+                              onClick={() => handleRemoveSkill(skill.id)}
+                              className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-700 transition-all duration-200"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Save Button */}
+            <div className="flex justify-end">
+              <button 
+                onClick={handleSave} 
+                className="bg-gradient-to-r from-primary-600 to-highlight-500 hover:from-primary-700 hover:to-highlight-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+              >
+                Save & Continue
+              </button>
             </div>
           </div>
-        )}
-
-      {/* Save and Continue Button */}
-      <div className="flex justify-end">
-        <button 
-          onClick={handleSave} 
-          className="bg-gradient-to-r from-primary-600 to-highlight-600 hover:from-primary-700 hover:to-highlight-700 text-white font-semibold py-3 px-6 rounded-lg shadow-soft hover:shadow-card transition-all duration-200 flex items-center space-x-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-          </svg>
-          <span>Save & Continue</span>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
-        </button>
-      </div>
     </div>
   );
 };
