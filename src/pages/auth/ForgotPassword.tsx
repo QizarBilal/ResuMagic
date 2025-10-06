@@ -46,8 +46,12 @@ const ForgotPassword: React.FC = () => {
           <div className="text-center">
             <Link to="/" className="inline-block">
               <div className="flex items-center justify-center space-x-2">
-                <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">R</span>
+                <div className="w-10 h-10 flex items-center justify-center">
+                  <img 
+                    src="/Logo2.png" 
+                    alt="ResuMagic Logo" 
+                    className="w-10 h-10 object-contain"
+                  />
                 </div>
                 <span className="text-2xl font-bold text-navy-900">ResuMagic</span>
               </div>
@@ -101,8 +105,12 @@ const ForgotPassword: React.FC = () => {
         <div className="text-center">
           <Link to="/" className="inline-block">
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">R</span>
+              <div className="w-10 h-10 flex items-center justify-center">
+                <img 
+                  src="/Logo2.png" 
+                  alt="ResuMagic Logo" 
+                  className="w-10 h-10 object-contain"
+                />
               </div>
               <span className="text-2xl font-bold text-navy-900">ResuMagic</span>
             </div>

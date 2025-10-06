@@ -16,6 +16,7 @@ import Button from '../components/ui/Button';
 import TemplateSelector, { Template } from '../components/resume/TemplateSelector';
 import LivePreview from '../components/resume/LivePreview';
 import ExportOptions from '../components/export/ExportOptions';
+import { ResumePreviewEnhanced } from '../components/preview';
 
 const ResumeBuilder: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -26,6 +27,7 @@ const ResumeBuilder: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | undefined>();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   useEffect(() => {
     const plan = searchParams.get('plan');
@@ -66,6 +68,23 @@ const ResumeBuilder: React.FC = () => {
       }
     }, 150);
   }, [currentStep, setCurrentStep]);
+
+  // Navigation handlers for mobile
+  const handleStepClick = useCallback((stepNumber: number) => {
+    handleStepChange(stepNumber);
+  }, [handleStepChange]);
+
+  const handlePreviousStep = useCallback(() => {
+    if (currentStep > 1) {
+      handleStepChange(currentStep - 1);
+    }
+  }, [currentStep, handleStepChange]);
+
+  const handleNextStep = useCallback(() => {
+    if (currentStep < steps.length) {
+      handleStepChange(currentStep + 1);
+    }
+  }, [currentStep, steps.length, handleStepChange]);
 
   // Auto-save simulation
   useEffect(() => {
@@ -230,12 +249,49 @@ const ResumeBuilder: React.FC = () => {
         </div>
       </div>
 
-      {/* Revolutionary 3-Panel Layout */}
-      <div className="relative z-10 h-screen flex">
-        {/* Left Sidebar - Smart Navigation (Reduced Width) */}
-        <div className="w-64 bg-white/70 backdrop-blur-xl border-r border-white/20 shadow-xl">
+      {/* Mobile-First Responsive Layout */}
+      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row lg:h-screen">
+        {/* Mobile Header */}
+        <div className="lg:hidden bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-sm sticky top-0 z-20">
+          <div className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-highlight-500 rounded-lg flex items-center justify-center shadow-md">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900">Resume Builder</h1>
+                  <p className="text-xs text-gray-600">Step {currentStep} of {steps.length}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowMobilePreview(true)}
+                  className="p-2 text-gray-600 hover:text-primary-600 hover:bg-white/10 rounded-lg transition-all duration-200"
+                  title="Preview Resume"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${autoSaveStatus === 'saved' ? 'bg-green-500' : autoSaveStatus === 'saving' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                  <span className="text-xs text-gray-600">
+                    {autoSaveStatus === 'saved' ? 'Saved' : autoSaveStatus === 'saving' ? 'Saving...' : 'Unsaved'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Left Sidebar - Desktop & Tablet Navigation */}
+        <div className="hidden lg:block lg:w-64 xl:w-72 bg-white/70 backdrop-blur-xl border-r border-white/20 shadow-xl">
           <div className="h-full flex flex-col">
-            {/* Navigation Header - Compact */}
+            {/* Navigation Header - Desktop */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center space-x-2 mb-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-highlight-500 rounded-lg flex items-center justify-center shadow-md">
@@ -391,20 +447,67 @@ const ResumeBuilder: React.FC = () => {
             </div>
           </div>
 
-          {/* Scrollable Content - Expanded for Better Form Visibility */}
-          <div id="resume-content-area" className="flex-1 overflow-y-auto p-6">
-            <div className={`max-w-6xl mx-auto transition-all duration-300 ${
+          {/* Mobile Step Navigation */}
+          <div className="lg:hidden bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-16 z-10">
+            <div className="px-4 py-3">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-900">
+                  {steps[currentStep - 1]?.title}
+                </h3>
+                <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                  {currentStep} / {steps.length}
+                </span>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                <div 
+                  className="bg-gradient-to-r from-primary-500 to-highlight-500 h-2 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${(currentStep / steps.length) * 100}%` }}
+                ></div>
+              </div>
+              
+              {/* Navigation Buttons */}
+              <div className="flex justify-between">
+                <button
+                  onClick={() => currentStep > 1 && handleStepClick(currentStep - 1)}
+                  disabled={currentStep <= 1}
+                  className="flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors text-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="font-medium">Back</span>
+                </button>
+                
+                <button
+                  onClick={() => currentStep < steps.length && handleStepClick(currentStep + 1)}
+                  disabled={currentStep >= steps.length}
+                  className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-primary-600 to-highlight-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-primary-700 hover:to-highlight-700 transition-all text-sm"
+                >
+                  <span className="font-medium">Next</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Scrollable Content - Mobile-First Responsive */}
+          <div id="resume-content-area" className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
+            <div className={`max-w-4xl lg:max-w-6xl mx-auto transition-all duration-300 ${
               isTransitioning ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
             }`}>
-              <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8">
+              <div className="bg-white/70 backdrop-blur-xl rounded-xl lg:rounded-2xl shadow-lg lg:shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8">
                 {renderCurrentStep()}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Sidebar - Live Preview (Reduced Width) */}
-        <div className="w-72 bg-white/70 backdrop-blur-xl border-l border-white/20 shadow-xl">
+        {/* Right Sidebar - Live Preview (Hidden on Mobile, Visible on Desktop) */}
+        <div className="hidden xl:block xl:w-72 2xl:w-80 bg-white/70 backdrop-blur-xl border-l border-white/20 shadow-xl">
           <div className="h-full flex flex-col">
             {/* Preview Header - Compact */}
             <div className="p-4 border-b border-gray-100">
@@ -503,7 +606,71 @@ const ResumeBuilder: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-lg z-30">
+          <div className="flex items-center justify-between p-4">
+            <button
+              onClick={handlePreviousStep}
+              disabled={currentStep === 1}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                currentStep === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-95'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Back</span>
+            </button>
+
+            <div className="flex items-center space-x-2">
+              <div className="flex space-x-1">
+                {steps.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                      index + 1 === currentStep
+                        ? 'bg-primary-600'
+                        : index + 1 < currentStep
+                        ? 'bg-green-500'
+                        : 'bg-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={handleNextStep}
+              disabled={currentStep === steps.length}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                currentStep === steps.length
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-primary-600 text-white hover:bg-primary-700 active:scale-95 shadow-lg'
+              }`}
+            >
+              <span>{currentStep === steps.length ? 'Complete' : 'Next'}</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Mobile Preview Modal */}
+      <Modal
+        isOpen={showMobilePreview}
+        onClose={() => setShowMobilePreview(false)}
+        title="Resume Preview"
+        size="xl"
+      >
+        <div className="h-[80vh] overflow-auto">
+          <ResumePreviewEnhanced />
+        </div>
+      </Modal>
 
       {/* Professional Payment Modal */}
       <Modal
